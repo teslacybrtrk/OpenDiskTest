@@ -1,0 +1,594 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		FE1F6DE32C8FBF0200848175 /* OpenDiskTestApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE1F6DE22C8FBF0200848175 /* OpenDiskTestApp.swift */; };
+		FE1F6DE52C8FBF0200848175 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE1F6DE42C8FBF0200848175 /* ContentView.swift */; };
+		FE1F6DE72C8FBF0300848175 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FE1F6DE62C8FBF0300848175 /* Assets.xcassets */; };
+		FE1F6DEA2C8FBF0300848175 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FE1F6DE92C8FBF0300848175 /* Preview Assets.xcassets */; };
+		FE1F6DF52C8FBF0400848175 /* OpenDiskTestTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE1F6DF42C8FBF0400848175 /* OpenDiskTestTests.swift */; };
+		FE1F6DFF2C8FBF0400848175 /* OpenDiskTestUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE1F6DFE2C8FBF0400848175 /* OpenDiskTestUITests.swift */; };
+		FE1F6E012C8FBF0400848175 /* OpenDiskTestUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE1F6E002C8FBF0400848175 /* OpenDiskTestUITestsLaunchTests.swift */; };
+		FE1F6E0E2C8FC6C300848175 /* DiskSpeedTestViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE1F6E0D2C8FC6C300848175 /* DiskSpeedTestViewModel.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		FE1F6DF12C8FBF0300848175 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FE1F6DD72C8FBF0200848175 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FE1F6DDE2C8FBF0200848175;
+			remoteInfo = OpenDiskTest;
+		};
+		FE1F6DFB2C8FBF0400848175 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FE1F6DD72C8FBF0200848175 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FE1F6DDE2C8FBF0200848175;
+			remoteInfo = OpenDiskTest;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		FE1F6DDF2C8FBF0200848175 /* OpenDiskTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OpenDiskTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FE1F6DE22C8FBF0200848175 /* OpenDiskTestApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenDiskTestApp.swift; sourceTree = "<group>"; };
+		FE1F6DE42C8FBF0200848175 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		FE1F6DE62C8FBF0300848175 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		FE1F6DE92C8FBF0300848175 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		FE1F6DEB2C8FBF0300848175 /* OpenDiskTest.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OpenDiskTest.entitlements; sourceTree = "<group>"; };
+		FE1F6DF02C8FBF0300848175 /* OpenDiskTestTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OpenDiskTestTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FE1F6DF42C8FBF0400848175 /* OpenDiskTestTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenDiskTestTests.swift; sourceTree = "<group>"; };
+		FE1F6DFA2C8FBF0400848175 /* OpenDiskTestUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OpenDiskTestUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FE1F6DFE2C8FBF0400848175 /* OpenDiskTestUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenDiskTestUITests.swift; sourceTree = "<group>"; };
+		FE1F6E002C8FBF0400848175 /* OpenDiskTestUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenDiskTestUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		FE1F6E0D2C8FC6C300848175 /* DiskSpeedTestViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiskSpeedTestViewModel.swift; sourceTree = "<group>"; };
+		FEB902192C929D4300A2A134 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		FE1F6DDC2C8FBF0200848175 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FE1F6DED2C8FBF0300848175 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FE1F6DF72C8FBF0400848175 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		FE1F6DD62C8FBF0200848175 = {
+			isa = PBXGroup;
+			children = (
+				FE1F6DE12C8FBF0200848175 /* OpenDiskTest */,
+				FE1F6DF32C8FBF0300848175 /* OpenDiskTestTests */,
+				FE1F6DFD2C8FBF0400848175 /* OpenDiskTestUITests */,
+				FE1F6DE02C8FBF0200848175 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		FE1F6DE02C8FBF0200848175 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				FE1F6DDF2C8FBF0200848175 /* OpenDiskTest.app */,
+				FE1F6DF02C8FBF0300848175 /* OpenDiskTestTests.xctest */,
+				FE1F6DFA2C8FBF0400848175 /* OpenDiskTestUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		FE1F6DE12C8FBF0200848175 /* OpenDiskTest */ = {
+			isa = PBXGroup;
+			children = (
+				FEB902192C929D4300A2A134 /* Info.plist */,
+				FE1F6DE22C8FBF0200848175 /* OpenDiskTestApp.swift */,
+				FE1F6DE42C8FBF0200848175 /* ContentView.swift */,
+				FE1F6E0D2C8FC6C300848175 /* DiskSpeedTestViewModel.swift */,
+				FE1F6DE62C8FBF0300848175 /* Assets.xcassets */,
+				FE1F6DEB2C8FBF0300848175 /* OpenDiskTest.entitlements */,
+				FE1F6DE82C8FBF0300848175 /* Preview Content */,
+			);
+			path = OpenDiskTest;
+			sourceTree = "<group>";
+		};
+		FE1F6DE82C8FBF0300848175 /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				FE1F6DE92C8FBF0300848175 /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		FE1F6DF32C8FBF0300848175 /* OpenDiskTestTests */ = {
+			isa = PBXGroup;
+			children = (
+				FE1F6DF42C8FBF0400848175 /* OpenDiskTestTests.swift */,
+			);
+			path = OpenDiskTestTests;
+			sourceTree = "<group>";
+		};
+		FE1F6DFD2C8FBF0400848175 /* OpenDiskTestUITests */ = {
+			isa = PBXGroup;
+			children = (
+				FE1F6DFE2C8FBF0400848175 /* OpenDiskTestUITests.swift */,
+				FE1F6E002C8FBF0400848175 /* OpenDiskTestUITestsLaunchTests.swift */,
+			);
+			path = OpenDiskTestUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		FE1F6DDE2C8FBF0200848175 /* OpenDiskTest */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FE1F6E042C8FBF0400848175 /* Build configuration list for PBXNativeTarget "OpenDiskTest" */;
+			buildPhases = (
+				FE1F6DDB2C8FBF0200848175 /* Sources */,
+				FE1F6DDC2C8FBF0200848175 /* Frameworks */,
+				FE1F6DDD2C8FBF0200848175 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = OpenDiskTest;
+			productName = OpenDiskTest;
+			productReference = FE1F6DDF2C8FBF0200848175 /* OpenDiskTest.app */;
+			productType = "com.apple.product-type.application";
+		};
+		FE1F6DEF2C8FBF0300848175 /* OpenDiskTestTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FE1F6E072C8FBF0400848175 /* Build configuration list for PBXNativeTarget "OpenDiskTestTests" */;
+			buildPhases = (
+				FE1F6DEC2C8FBF0300848175 /* Sources */,
+				FE1F6DED2C8FBF0300848175 /* Frameworks */,
+				FE1F6DEE2C8FBF0300848175 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				FE1F6DF22C8FBF0300848175 /* PBXTargetDependency */,
+			);
+			name = OpenDiskTestTests;
+			productName = OpenDiskTestTests;
+			productReference = FE1F6DF02C8FBF0300848175 /* OpenDiskTestTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		FE1F6DF92C8FBF0400848175 /* OpenDiskTestUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FE1F6E0A2C8FBF0400848175 /* Build configuration list for PBXNativeTarget "OpenDiskTestUITests" */;
+			buildPhases = (
+				FE1F6DF62C8FBF0400848175 /* Sources */,
+				FE1F6DF72C8FBF0400848175 /* Frameworks */,
+				FE1F6DF82C8FBF0400848175 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				FE1F6DFC2C8FBF0400848175 /* PBXTargetDependency */,
+			);
+			name = OpenDiskTestUITests;
+			productName = OpenDiskTestUITests;
+			productReference = FE1F6DFA2C8FBF0400848175 /* OpenDiskTestUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		FE1F6DD72C8FBF0200848175 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1540;
+				LastUpgradeCheck = 1540;
+				TargetAttributes = {
+					FE1F6DDE2C8FBF0200848175 = {
+						CreatedOnToolsVersion = 15.4;
+					};
+					FE1F6DEF2C8FBF0300848175 = {
+						CreatedOnToolsVersion = 15.4;
+						TestTargetID = FE1F6DDE2C8FBF0200848175;
+					};
+					FE1F6DF92C8FBF0400848175 = {
+						CreatedOnToolsVersion = 15.4;
+						TestTargetID = FE1F6DDE2C8FBF0200848175;
+					};
+				};
+			};
+			buildConfigurationList = FE1F6DDA2C8FBF0200848175 /* Build configuration list for PBXProject "OpenDiskTest" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = FE1F6DD62C8FBF0200848175;
+			productRefGroup = FE1F6DE02C8FBF0200848175 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				FE1F6DDE2C8FBF0200848175 /* OpenDiskTest */,
+				FE1F6DEF2C8FBF0300848175 /* OpenDiskTestTests */,
+				FE1F6DF92C8FBF0400848175 /* OpenDiskTestUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		FE1F6DDD2C8FBF0200848175 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FE1F6DEA2C8FBF0300848175 /* Preview Assets.xcassets in Resources */,
+				FE1F6DE72C8FBF0300848175 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FE1F6DEE2C8FBF0300848175 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FE1F6DF82C8FBF0400848175 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		FE1F6DDB2C8FBF0200848175 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FE1F6DE52C8FBF0200848175 /* ContentView.swift in Sources */,
+				FE1F6E0E2C8FC6C300848175 /* DiskSpeedTestViewModel.swift in Sources */,
+				FE1F6DE32C8FBF0200848175 /* OpenDiskTestApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FE1F6DEC2C8FBF0300848175 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FE1F6DF52C8FBF0400848175 /* OpenDiskTestTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FE1F6DF62C8FBF0400848175 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FE1F6DFF2C8FBF0400848175 /* OpenDiskTestUITests.swift in Sources */,
+				FE1F6E012C8FBF0400848175 /* OpenDiskTestUITestsLaunchTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		FE1F6DF22C8FBF0300848175 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FE1F6DDE2C8FBF0200848175 /* OpenDiskTest */;
+			targetProxy = FE1F6DF12C8FBF0300848175 /* PBXContainerItemProxy */;
+		};
+		FE1F6DFC2C8FBF0400848175 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FE1F6DDE2C8FBF0200848175 /* OpenDiskTest */;
+			targetProxy = FE1F6DFB2C8FBF0400848175 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		FE1F6E022C8FBF0400848175 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.5;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		FE1F6E032C8FBF0400848175 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.5;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		FE1F6E052C8FBF0400848175 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = OpenDiskTest/OpenDiskTest.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"OpenDiskTest/Preview Content\"";
+				DEVELOPMENT_TEAM = AY429H89ZJ;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = OpenDiskTest/Info.plist;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Self.OpenDiskTest;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		FE1F6E062C8FBF0400848175 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = OpenDiskTest/OpenDiskTest.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"OpenDiskTest/Preview Content\"";
+				DEVELOPMENT_TEAM = AY429H89ZJ;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = OpenDiskTest/Info.plist;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Self.OpenDiskTest;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		FE1F6E082C8FBF0400848175 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = AY429H89ZJ;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Self.OpenDiskTestTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/OpenDiskTest.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/OpenDiskTest";
+			};
+			name = Debug;
+		};
+		FE1F6E092C8FBF0400848175 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = AY429H89ZJ;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Self.OpenDiskTestTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/OpenDiskTest.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/OpenDiskTest";
+			};
+			name = Release;
+		};
+		FE1F6E0B2C8FBF0400848175 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = AY429H89ZJ;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Self.OpenDiskTestUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = OpenDiskTest;
+			};
+			name = Debug;
+		};
+		FE1F6E0C2C8FBF0400848175 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = AY429H89ZJ;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Self.OpenDiskTestUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = OpenDiskTest;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		FE1F6DDA2C8FBF0200848175 /* Build configuration list for PBXProject "OpenDiskTest" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FE1F6E022C8FBF0400848175 /* Debug */,
+				FE1F6E032C8FBF0400848175 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FE1F6E042C8FBF0400848175 /* Build configuration list for PBXNativeTarget "OpenDiskTest" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FE1F6E052C8FBF0400848175 /* Debug */,
+				FE1F6E062C8FBF0400848175 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FE1F6E072C8FBF0400848175 /* Build configuration list for PBXNativeTarget "OpenDiskTestTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FE1F6E082C8FBF0400848175 /* Debug */,
+				FE1F6E092C8FBF0400848175 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FE1F6E0A2C8FBF0400848175 /* Build configuration list for PBXNativeTarget "OpenDiskTestUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FE1F6E0B2C8FBF0400848175 /* Debug */,
+				FE1F6E0C2C8FBF0400848175 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = FE1F6DD72C8FBF0200848175 /* Project object */;
+}
