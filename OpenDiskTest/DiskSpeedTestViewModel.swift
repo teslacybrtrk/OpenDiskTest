@@ -5,6 +5,11 @@ class DiskSpeedTestViewModel: ObservableObject {
     @Published var fileSize: Double = 10 // Default 10 MB
     @Published var iterations: Int = 100 // Default 100 iterations
     @Published var isRunning = false
+    @Published var currentIteration: Int = 0
+
+    var progress: Double {
+        iterations > 0 ? Double(currentIteration) / Double(iterations) : 0
+    }
     @Published var results: [TestResult] = [
         TestResult(name: "Sequential Write"),
         TestResult(name: "Sequential Read"),
@@ -18,6 +23,7 @@ class DiskSpeedTestViewModel: ObservableObject {
     
     func runTests() {
         isRunning = true
+        currentIteration = 0
         results = results.map { TestResult(name: $0.name) }
         logs.removeAll()
         
@@ -47,7 +53,9 @@ class DiskSpeedTestViewModel: ObservableObject {
             
             for iteration in 1...self.iterations {
                 guard self.isRunning else { break }
-                
+
+                DispatchQueue.main.async { self.currentIteration = iteration }
+
                 self.addLog("Starting iteration \(iteration)")
                 
                 self.updateTest(index: 0, name: "Sequential Write") { self.sequentialWrite(size: fileSizeBytes, to: testFileURL) }
