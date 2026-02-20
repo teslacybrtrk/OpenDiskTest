@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: write
+
 # Only allow one release build at a time; cancel in-flight builds on new pushes
 concurrency:
   group: release
