@@ -26,11 +26,16 @@ enum Theme {
 
 struct ContentView: View {
     @ObservedObject var viewModel: DiskSpeedTestViewModel
+    @ObservedObject var updateChecker: UpdateChecker
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         VStack(spacing: 0) {
             headerSection
+
+            if updateChecker.updateAvailable {
+                updateBanner
+            }
 
             Divider().background(Theme.border)
 
@@ -41,6 +46,67 @@ struct ContentView: View {
         .frame(width: 960)
         .animation(.easeInOut(duration: 0.25), value: viewModel.isRunning)
         .animation(.easeInOut(duration: 0.25), value: viewModel.currentIteration > 0)
+        .animation(.easeInOut(duration: 0.25), value: updateChecker.updateAvailable)
+    }
+
+    // MARK: Update Banner
+
+    private var updateBanner: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "arrow.down.circle.fill")
+                .font(.system(size: 16))
+                .foregroundStyle(LinearGradient(
+                    colors: [Color(hex: "00BFFF"), Color(hex: "C84FFF")],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                ))
+
+            Text("A new version is available")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(.white)
+
+            Spacer()
+
+            if updateChecker.isDownloading {
+                ProgressView(value: updateChecker.downloadProgress)
+                    .progressViewStyle(.linear)
+                    .frame(width: 100)
+                    .tint(Color(hex: "00BFFF"))
+                Text("\(Int(updateChecker.downloadProgress * 100))%")
+                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .foregroundColor(Theme.secondaryText)
+                    .frame(width: 36, alignment: .trailing)
+            } else {
+                Button {
+                    updateChecker.updateAvailable = false
+                } label: {
+                    Text("Dismiss")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(Theme.secondaryText)
+                }
+                .buttonStyle(PlainButtonStyle())
+
+                Button {
+                    updateChecker.performUpdate()
+                } label: {
+                    Text("Update")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 5)
+                        .background(LinearGradient(
+                            colors: [Color(hex: "00BFFF"), Color(hex: "C84FFF")],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        ))
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+        }
+        .padding(.horizontal, 24)
+        .padding(.vertical, 10)
+        .background(Color(hex: "1A1A2E"))
     }
 
     // MARK: Header

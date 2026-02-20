@@ -3,11 +3,15 @@ import SwiftUI
 @main
 struct OpenDiskTestApp: App {
     @StateObject private var viewModel = DiskSpeedTestViewModel()
+    @StateObject private var updateChecker = UpdateChecker()
 
     var body: some Scene {
         WindowGroup {
-            ContentView(viewModel: viewModel)
+            ContentView(viewModel: viewModel, updateChecker: updateChecker)
                 .environmentObject(viewModel)
+                .onAppear {
+                    updateChecker.checkForUpdate()
+                }
         }
         .windowResizability(.contentSize)
         .commands {
