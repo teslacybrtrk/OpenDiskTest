@@ -3,7 +3,7 @@ import Charts
 
 // MARK: - Theme
 
-private enum Theme {
+enum Theme {
     static let background    = Color(hex: "0D0D0D")
     static let card          = Color(hex: "181818")
     static let cardInner     = Color(hex: "111111")
@@ -26,7 +26,7 @@ private enum Theme {
 
 struct ContentView: View {
     @ObservedObject var viewModel: DiskSpeedTestViewModel
-    @State private var showLog = false
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         VStack(spacing: 0) {
@@ -36,16 +36,9 @@ struct ContentView: View {
 
             resultsSection
                 .padding(20)
-
-            if showLog {
-                Divider().background(Theme.border)
-                logSection
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
         }
         .background(Theme.background)
         .frame(width: 960)
-        .animation(.spring(response: 0.35, dampingFraction: 0.85), value: showLog)
         .animation(.easeInOut(duration: 0.25), value: viewModel.isRunning)
         .animation(.easeInOut(duration: 0.25), value: viewModel.currentIteration > 0)
     }
@@ -114,10 +107,10 @@ struct ContentView: View {
                         )
                     }
                     ControlButton(
-                        icon: showLog ? "chevron.down.circle.fill" : "doc.text.fill",
+                        icon: "doc.text.fill",
                         label: "Log",
-                        color: showLog ? Color(hex: "0A84FF") : Color(hex: "2C2C2C"),
-                        action: { withAnimation { showLog.toggle() } }
+                        color: Color(hex: "2C2C2C"),
+                        action: { openWindow(id: "log") }
                     )
                 }
             }
@@ -203,9 +196,14 @@ struct ContentView: View {
         .frame(height: 420)
     }
 
-    // MARK: Log
+}
 
-    private var logSection: some View {
+// MARK: - Log Window
+
+struct LogWindowView: View {
+    @ObservedObject var viewModel: DiskSpeedTestViewModel
+
+    var body: some View {
         VStack(spacing: 0) {
             HStack {
                 Image(systemName: "terminal.fill")
@@ -230,8 +228,9 @@ struct ContentView: View {
             Divider().background(Theme.border)
 
             IntegratedLogView(logs: $viewModel.logs)
-                .frame(height: 180)
         }
+        .background(Theme.background)
+        .frame(minWidth: 400, minHeight: 200)
     }
 }
 
