@@ -31,6 +31,9 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
 
+      - name: Ad-hoc sign
+        run: codesign --force --deep --sign - build/Build/Products/Release/OpenDiskTest.app
+
       - name: Package ZIP
         run: |
           APP_PATH="build/Build/Products/Release/OpenDiskTest.app"
@@ -45,7 +48,7 @@ jobs:
           RELEASE_NAME="Latest Build (${SHORT_SHA})"
           BODY="Automated build from commit ${GITHUB_SHA} on $(date -u '+%Y-%m-%d %H:%M UTC').
 
-          > **Note:** This app is unsigned. On first launch, right-click the app and select **Open** to bypass Gatekeeper."
+          > **Note:** This app is not notarized. On first launch, right-click the app and select **Open** to bypass Gatekeeper."
 
           # Delete existing release and tag if present
           gh release delete "$TAG" --yes --cleanup-tag 2>/dev/null || true
