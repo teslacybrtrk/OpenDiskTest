@@ -41,7 +41,7 @@ No linting tools are configured in this project.
 
 2. `DiskSpeedTestViewModel.swift` — All business logic. An `ObservableObject` with `@Published` properties (`fileSize`, `iterations`, `isRunning`, `results`, `logs`). Runs disk I/O on a background `DispatchQueue` and dispatches UI updates back to the main thread. The four test methods (`sequentialWrite`, `sequentialRead`, `randomWrite`, `randomRead`) write/read a temp file in `FileManager.default.temporaryDirectory`, measuring MB/s for each iteration. Results are stored in `TestResult` structs (which auto-compute min/avg/max from a speeds array).
 
-3. `ContentView.swift` — Pure view layer; reads from the ViewModel's published properties. Contains subviews: `IndividualSpeedTestChart` (uses Apple Charts framework), `ResultBlock`, `IntegratedLogView`, `InputField`, and `IconButton`.
+3. `ContentView.swift` — Pure view layer; reads from the ViewModel's published properties. Contains subviews: `TestCard`, `SpeedDistributionChart` (uses Apple Charts framework), `IntegratedLogView`, `InputField`, `ControlButton`, and `StatCell`. Defines a dark theme with hardcoded hex colors and per-test-type accent colors.
 
 **Threading model:** All disk I/O runs on `DispatchQueue.global(qos: .userInitiated)`; all `@Published` mutations happen via `DispatchQueue.main.async`.
 
