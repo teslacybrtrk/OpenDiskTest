@@ -1,0 +1,54 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [main]
+
+# Only allow one release build at a time; cancel in-flight builds on new pushes
+concurrency:
+  group: release
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.2.app/Contents/Developer
+
+      - name: Build
+        run: |
+          xcodebuild -project OpenDiskTest.xcodeproj \
+            -scheme OpenDiskTest \
+            -configuration Release \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Package ZIP
+        run: |
+          APP_PATH="build/Build/Products/Release/OpenDiskTest.app"
+          ditto -c -k --keepParent "$APP_PATH" OpenDiskTest.zip
+
+      - name: Create or update release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          TAG="latest"
+          RELEASE_NAME="Latest Build (${SHORT_SHA})"
+          BODY="Automated build from commit ${GITHUB_SHA} on $(date -u '+%Y-%m-%d %H:%M UTC').
+
+          > **Note:** This app is unsigned. On first launch, right-click the app and select **Open** to bypass Gatekeeper."
+
+          # Delete existing release and tag if present
+          gh release delete "$TAG" --yes --cleanup-tag 2>/dev/null || true
+
+          # Create new release with the artifact
+          gh release create "$TAG" OpenDiskTest.zip \
+            --title "$RELEASE_NAME" \
+            --notes "$BODY" \
+            --latest
