@@ -19,6 +19,8 @@ xcodebuild -project OpenDiskTest.xcodeproj -scheme OpenDiskTest -configuration D
 xcodebuild -project OpenDiskTest.xcodeproj -scheme OpenDiskTest -configuration Release build
 ```
 
+**Important:** When making code changes, always commit, push, create a PR, and merge it to trigger a build. This is the workflow for validating changes since the CI pipeline builds on merge. Do this whenever you reach a point where changes are ready to test.
+
 ## Tests
 
 ```bash
