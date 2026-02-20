@@ -16,6 +16,12 @@ struct OpenDiskTestApp: App {
         .windowResizability(.contentSize)
         .commands {
             CommandGroup(replacing: .newItem) { }  // Disable the "New" menu item
+            CommandGroup(after: .appInfo) {
+                Button("Check for Updates…") {
+                    updateChecker.checkForUpdate()
+                }
+                .keyboardShortcut("U", modifiers: [.command])
+            }
         }
 
         Window("Activity Log", id: "log") {
