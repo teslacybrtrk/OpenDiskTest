@@ -18,18 +18,78 @@ final class OpenDiskTestTests: XCTestCase {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
     }
 
-    func testExample() throws {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        // Any test you write for XCTest can be annotated as throws and async.
-        // Mark your test throws to produce an unexpected failure when your test encounters an uncaught error.
-        // Mark your test async to allow awaiting for asynchronous code to complete. Check the results with assertions afterwards.
+    // MARK: - TestResult aggregation
+
+    func testTestResultEmptyDefaultsToZero() throws {
+        let result = TestResult(name: "Empty")
+        XCTAssertEqual(result.minSpeed, 0)
+        XCTAssertEqual(result.avgSpeed, 0)
+        XCTAssertEqual(result.maxSpeed, 0)
+        XCTAssertTrue(result.speeds.isEmpty)
+    }
+
+    func testTestResultComputesMinAvgMaxAndSorted() throws {
+        var result = TestResult(name: "Speeds")
+        result.speeds = [12.5, 9.0, 15.75, 9.0, 20.0]
+        result.sortedSpeeds = result.speeds.enumerated().sorted { $0.element < $1.element }
+
+        XCTAssertEqual(result.minSpeed, 9.0)
+        XCTAssertEqual(result.maxSpeed, 20.0)
+        XCTAssertEqual(result.avgSpeed, 13.25, accuracy: 0.0001)
+        XCTAssertEqual(result.sortedSpeeds.count, 5)
+        XCTAssertEqual(result.sortedSpeeds.first?.element, 9.0)
+        XCTAssertEqual(result.sortedSpeeds.last?.element, 20.0)
+    }
+
+    // MARK: - ViewModel configuration & validation
+
+    func testViewModelDefaultCanStartIsTrue() throws {
+        let vm = DiskSpeedTestViewModel()
+        // Fresh VM should have valid defaults
+        XCTAssertTrue(vm.canStartTests)
+        XCTAssertEqual(vm.fileSize, 10)
+        XCTAssertEqual(vm.iterations, 100)
+    }
+
+    func testViewModelRejectsInvalidParameters() throws {
+        let vm = DiskSpeedTestViewModel()
+        vm.fileSize = 0
+        XCTAssertFalse(vm.canStartTests)
+
+        vm.fileSize = 10
+        vm.iterations = 0
+        XCTAssertFalse(vm.canStartTests)
+
+        vm.iterations = 2000
+        XCTAssertFalse(vm.canStartTests)
+
+        vm.fileSize = 5000
+        vm.iterations = 50
+        XCTAssertFalse(vm.canStartTests)
+
+        vm.fileSize = 100
+        vm.iterations = 10
+        XCTAssertTrue(vm.canStartTests)
+    }
+
+    // MARK: - Update SHA comparison logic (mirrors UpdateChecker predicate)
+
+    func testUpdateSHAIsNewComparison() throws {
+        func isNew(localSHA: String, remoteSHA: String) -> Bool {
+            !localSHA.hasPrefix(remoteSHA) && !remoteSHA.hasPrefix(localSHA)
+        }
+
+        XCTAssertTrue(isNew(localSHA: "d365f26701ffd38100cb8dd37f9f2d3f3b629d08", remoteSHA: "abc1234"))
+        XCTAssertFalse(isNew(localSHA: "abc1234dead", remoteSHA: "abc1234"))
+        XCTAssertFalse(isNew(localSHA: "abc1234", remoteSHA: "abc1234deadbeef"))
+        XCTAssertFalse(isNew(localSHA: "abc1234", remoteSHA: "abc1234"))
+        XCTAssertTrue(isNew(localSHA: "1111111", remoteSHA: "2222222"))
     }
 
     func testPerformanceExample() throws {
-        // This is an example of a performance test case.
+        // Leave a performance placeholder (disk I/O not unit-tested here)
         self.measure {
-            // Put the code you want to measure the time of here.
+            _ = (1...1000).map { $0 * 2 }
         }
     }
 

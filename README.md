@@ -28,11 +28,14 @@ You only need to do this once. After that, the app opens normally.
 ## Features
 
 - **Sequential write/read** — measures sustained throughput with large files
-- **Random write/read** — measures IOPS-style performance with 4KB blocks
-- Configurable file size and iteration count
+- **Random write/read** — measures IOPS-style performance with 4KB blocks (also reports effective throughput)
+- Choose custom test directory or volume (persisted via macOS security-scoped bookmarks) or stick with the system temp dir
+- Configurable file size (0.1–4096 MB) and iteration count (1–1000), with live validation
+- Settings (size, iterations, last test location) are persisted across launches
 - Live speed distribution charts per test
 - Min / Avg / Max statistics
-- Built-in activity log
+- Built-in activity log (separate window + "Log" button)
+- Update checker (banner + menu item) that links to GitHub releases (manual download recommended for safety)
 
 ## Building from source
 

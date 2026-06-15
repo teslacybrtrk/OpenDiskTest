@@ -19,7 +19,18 @@ xcodebuild -project OpenDiskTest.xcodeproj -scheme OpenDiskTest -configuration D
 xcodebuild -project OpenDiskTest.xcodeproj -scheme OpenDiskTest -configuration Release build
 ```
 
+To produce a distributable unsigned adhoc zip locally (similar to CI):
+
+```bash
+xcodebuild -project OpenDiskTest.xcodeproj -scheme OpenDiskTest -configuration Release \
+  -derivedDataPath build CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+codesign --force --deep --sign - build/Build/Products/Release/OpenDiskTest.app
+ditto -c -k --keepParent build/Build/Products/Release/OpenDiskTest.app OpenDiskTest.zip
+```
+
 **Important:** When making code changes, always commit, push, create a PR, and merge it to trigger a build. This is the workflow for validating changes since the CI pipeline builds on merge. Do this whenever you reach a point where changes are ready to test.
+
+The GitHub Actions workflow now triggers on both `push` to main (full release) **and** `pull_request` (build + test only, no release publish). PRs provide early validation.
 
 ## Tests
 
@@ -35,16 +46,18 @@ No linting tools are configured in this project.
 
 ## Architecture
 
-**Pattern:** MVVM with Combine for reactivity.
+**Pattern:** MVVM.
 
-**Three-file core:**
+**Core files:**
 
-1. `OpenDiskTestApp.swift` — `@main` entry point; creates `DiskSpeedTestViewModel` as a `@StateObject` and injects it into `ContentView`.
+1. `OpenDiskTestApp.swift` — `@main` entry point; creates `DiskSpeedTestViewModel` as a `@StateObject` and injects it into `ContentView`. Also wires `UpdateChecker` and the "Activity Log" window + menu command.
 
-2. `DiskSpeedTestViewModel.swift` — All business logic. An `ObservableObject` with `@Published` properties (`fileSize`, `iterations`, `isRunning`, `results`, `logs`). Runs disk I/O on a background `DispatchQueue` and dispatches UI updates back to the main thread. The four test methods (`sequentialWrite`, `sequentialRead`, `randomWrite`, `randomRead`) write/read a temp file in `FileManager.default.temporaryDirectory`, measuring MB/s for each iteration. Results are stored in `TestResult` structs (which auto-compute min/avg/max from a speeds array).
+2. `DiskSpeedTestViewModel.swift` — All business logic + persistence. `ObservableObject` with `@Published` for `fileSize`, `iterations`, `isRunning`, `results`, `logs`, `testDirectory` (URL?, nil = temp dir). Disk I/O on background `DispatchQueue.global(qos: .userInitiated)`. Test file lives in either NSTemporaryDirectory or a user-chosen (bookmarked) directory. `TestResult` computes min/avg/max + maintains sortedSpeeds for the chart. Settings persisted via UserDefaults (size, iterations, bookmark data). `canStartTests` + guard for validation. Stop checks inside random I/O loops.
 
-3. `ContentView.swift` — Pure view layer; reads from the ViewModel's published properties. Contains subviews: `TestCard`, `SpeedDistributionChart` (uses Apple Charts framework), `IntegratedLogView`, `InputField`, `ControlButton`, and `StatCell`. Defines a dark theme with hardcoded hex colors and per-test-type accent colors.
+3. `ContentView.swift` — View layer + many small subviews (`TestCard`, `SpeedDistributionChart`, `IntegratedLogView`, `InputField`, `ControlButton`, `StatCell`). Location picker uses SwiftUI `.fileImporter` + folder button + reset. Run button is disabled for invalid params. Dark theme + per-test accent colors. Update banner safely opens the GitHub releases page (no more in-app destructive swap).
 
-**Threading model:** All disk I/O runs on `DispatchQueue.global(qos: .userInitiated)`; all `@Published` mutations happen via `DispatchQueue.main.async`.
+**Threading model:** All disk I/O on `DispatchQueue.global(qos: .userInitiated)`; UI updates + @Published via `DispatchQueue.main.async`. Stop flag checked between iterations (and inside random chunk loops for better responsiveness).
 
-**Sandbox:** The app runs sandboxed (`com.apple.security.app-sandbox = true`) with read-only user-selected file access. Temp directory writes are allowed implicitly.
+**Persistence & Directory selection:** UserDefaults for scalars + `bookmarkData(options: .withSecurityScope)` for custom test dirs (robust even if app is later sandboxed). Security-scoped resource access is started/stopped appropriately.
+
+**Sandbox & Security:** The app is **not sandboxed** (ENABLE_APP_SANDBOX = NO). This enables flexible test directory selection (any user-writable volume or folder) without extra entitlements or powerbox prompts. Only outgoing network access (`com.apple.security.network.client`) is declared for the GitHub update checker. All I/O goes to either the system temp dir or an explicitly user-chosen directory.

@@ -1,5 +1,6 @@
 import SwiftUI
 import Charts
+import UniformTypeIdentifiers
 
 // MARK: - Theme
 
@@ -29,6 +30,8 @@ struct ContentView: View {
     @ObservedObject var updateChecker: UpdateChecker
     @Environment(\.openWindow) private var openWindow
 
+    @State private var isChoosingLocation = false
+
     var body: some View {
         VStack(spacing: 0) {
             headerSection
@@ -47,6 +50,23 @@ struct ContentView: View {
         .animation(.easeInOut(duration: 0.25), value: viewModel.isRunning)
         .animation(.easeInOut(duration: 0.25), value: viewModel.currentIteration > 0)
         .animation(.easeInOut(duration: 0.25), value: updateChecker.updateAvailable)
+        .fileImporter(
+            isPresented: $isChoosingLocation,
+            allowedContentTypes: [UTType.folder],
+            allowsMultipleSelection: false
+        ) { result in
+            switch result {
+            case .success(let urls):
+                if let url = urls.first {
+                    // Start accessing now; the VM will create a long-lived bookmark
+                    _ = url.startAccessingSecurityScopedResource()
+                    viewModel.chooseTestDirectory(url)
+                }
+            case .failure(let error):
+                // Errors are logged inside the VM; surface minimally
+                print("Location selection error: \(error)")
+            }
+        }
     }
 
     // MARK: Update Banner
@@ -67,42 +87,32 @@ struct ContentView: View {
 
             Spacer()
 
-            if updateChecker.isDownloading {
-                ProgressView(value: updateChecker.downloadProgress)
-                    .progressViewStyle(.linear)
-                    .frame(width: 100)
-                    .tint(Color(hex: "00BFFF"))
-                Text("\(Int(updateChecker.downloadProgress * 100))%")
-                    .font(.system(size: 11, weight: .medium, design: .rounded))
+            Button {
+                updateChecker.updateAvailable = false
+            } label: {
+                Text("Dismiss")
+                    .font(.system(size: 11, weight: .medium))
                     .foregroundColor(Theme.secondaryText)
-                    .frame(width: 36, alignment: .trailing)
-            } else {
-                Button {
-                    updateChecker.updateAvailable = false
-                } label: {
-                    Text("Dismiss")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(Theme.secondaryText)
-                }
-                .buttonStyle(PlainButtonStyle())
-
-                Button {
-                    updateChecker.performUpdate()
-                } label: {
-                    Text("Update")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 5)
-                        .background(LinearGradient(
-                            colors: [Color(hex: "00BFFF"), Color(hex: "C84FFF")],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        ))
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-                }
-                .buttonStyle(PlainButtonStyle())
             }
+            .buttonStyle(PlainButtonStyle())
+
+            Button {
+                updateChecker.performUpdate()
+            } label: {
+                Text("View on GitHub")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 5)
+                    .background(LinearGradient(
+                        colors: [Color(hex: "00BFFF"), Color(hex: "C84FFF")],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    ))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+            }
+            .buttonStyle(PlainButtonStyle())
+            .help("Opens the latest release page. Download the .zip and replace the app manually (safer than auto-install).")
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 10)
@@ -155,29 +165,76 @@ struct ContentView: View {
 
                 Spacer()
 
-                // Controls
-                HStack(spacing: 10) {
-                    if viewModel.isRunning {
+                // Location picker + Controls (right side)
+                HStack(spacing: 12) {
+                    // Compact location chooser
+                    HStack(spacing: 6) {
+                        Button {
+                            isChoosingLocation = true
+                        } label: {
+                            Image(systemName: "folder.fill")
+                                .font(.system(size: 11, weight: .medium))
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .foregroundColor(Theme.secondaryText)
+                        .help("Choose a custom test directory or volume (bookmark will be saved)")
+
+                        Group {
+                            if let dir = viewModel.testDirectory {
+                                Text(dir.lastPathComponent)
+                                    .font(.system(size: 10))
+                                    .foregroundColor(Theme.secondaryText)
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
+                                    .frame(maxWidth: 90, alignment: .leading)
+                                Button {
+                                    viewModel.resetToTemporaryDirectory()
+                                } label: {
+                                    Text("reset")
+                                        .font(.system(size: 9, weight: .medium))
+                                        .foregroundColor(Theme.secondaryText)
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                                .help("Reset to system temporary directory")
+                            } else {
+                                Text("temp dir")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(Theme.secondaryText)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Theme.cardInner)
+                    .clipShape(RoundedRectangle(cornerRadius: 5))
+
+                    // Controls
+                    HStack(spacing: 10) {
+                        if viewModel.isRunning {
+                            ControlButton(
+                                icon: "stop.fill",
+                                label: "Stop",
+                                color: Color(hex: "E53935"),
+                                disabled: false,
+                                action: viewModel.stopTests
+                            )
+                        } else {
+                            ControlButton(
+                                icon: "play.fill",
+                                label: "Run",
+                                color: Color(hex: "00C9A7"),
+                                disabled: !viewModel.canStartTests,
+                                action: viewModel.runTests
+                            )
+                        }
                         ControlButton(
-                            icon: "stop.fill",
-                            label: "Stop",
-                            color: Color(hex: "E53935"),
-                            action: viewModel.stopTests
-                        )
-                    } else {
-                        ControlButton(
-                            icon: "play.fill",
-                            label: "Run",
-                            color: Color(hex: "00C9A7"),
-                            action: viewModel.runTests
+                            icon: "doc.text.fill",
+                            label: "Log",
+                            color: Color(hex: "2C2C2C"),
+                            disabled: false,
+                            action: { openWindow(id: "log") }
                         )
                     }
-                    ControlButton(
-                        icon: "doc.text.fill",
-                        label: "Log",
-                        color: Color(hex: "2C2C2C"),
-                        action: { openWindow(id: "log") }
-                    )
                 }
             }
             .padding(.horizontal, 24)
@@ -500,6 +557,7 @@ struct ControlButton: View {
     let icon: String
     let label: String
     let color: Color
+    var disabled: Bool = false
     let action: () -> Void
 
     var body: some View {
@@ -513,10 +571,12 @@ struct ControlButton: View {
             .foregroundColor(.white)
             .padding(.horizontal, 14)
             .padding(.vertical, 7)
-            .background(color)
+            .background(disabled ? Theme.border : color)
+            .opacity(disabled ? 0.45 : 1.0)
             .clipShape(RoundedRectangle(cornerRadius: 7))
         }
         .buttonStyle(PlainButtonStyle())
+        .disabled(disabled)
     }
 }
 
