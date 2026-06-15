@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 class DiskSpeedTestViewModel: ObservableObject {
     @Published var fileSize: Double = 10 { // Default 10 MB
@@ -32,9 +33,8 @@ class DiskSpeedTestViewModel: ObservableObject {
     private let fileManager = FileManager.default
     private var securityScopedResource: URL? = nil
 
-    override init() {
-        super.init()
-        // Load persisted settings (didSet will re-save on override, which is harmless)
+    init() {
+        // Load persisted settings (didSet will re-save on the assignments, which is harmless)
         let savedSize = UserDefaults.standard.double(forKey: "fileSize")
         if savedSize >= 0.1 { fileSize = savedSize }
         let savedIters = UserDefaults.standard.integer(forKey: "iterations")
