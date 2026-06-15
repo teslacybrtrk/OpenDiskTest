@@ -96,23 +96,34 @@ struct ContentView: View {
             }
             .buttonStyle(PlainButtonStyle())
 
-            Button {
-                updateChecker.performUpdate()
-            } label: {
-                Text("View on GitHub")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 5)
-                    .background(LinearGradient(
-                        colors: [Color(hex: "00BFFF"), Color(hex: "C84FFF")],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    ))
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
+            if updateChecker.isDownloading {
+                ProgressView(value: updateChecker.downloadProgress)
+                    .progressViewStyle(.linear)
+                    .frame(width: 120)
+                    .tint(Color(hex: "00BFFF"))
+                Text("\(Int(updateChecker.downloadProgress * 100))%")
+                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .foregroundColor(Theme.secondaryText)
+                    .frame(width: 36, alignment: .trailing)
+            } else {
+                Button {
+                    updateChecker.performUpdate()
+                } label: {
+                    Text("Download Update")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 5)
+                        .background(LinearGradient(
+                            colors: [Color(hex: "00BFFF"), Color(hex: "C84FFF")],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        ))
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                }
+                .buttonStyle(PlainButtonStyle())
+                .help("Downloads the new version and places a ready-to-use OpenDiskTest (new).app in your Downloads folder. Quit this app, then drag the new one over your existing app to update (this app is not notarized, so manual update is required).")
             }
-            .buttonStyle(PlainButtonStyle())
-            .help("Opens the latest release page. Download the .zip and replace the app manually (safer than auto-install).")
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 10)
