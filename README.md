@@ -8,22 +8,23 @@ Requires macOS 14.5 or later.
 
 **[Download the latest build](https://github.com/teslacybrtrk/OpenDiskTest/releases/latest/download/OpenDiskTest.zip)**
 
-### Opening the app
+### Opening the app for the first time
 
-We don't pay Apple $99/year for a Developer ID certificate, so macOS will show a warning the first time you open the app. Here's how to get past it:
+We don't pay for an Apple Developer ID or notarization, so macOS Gatekeeper blocks the app on first launch (common on Sonoma, Sequoia, and later).
 
-1. Unzip `OpenDiskTest.zip`
-2. Move `OpenDiskTest.app` to your Applications folder (or wherever you like)
-3. **Right-click** (or Control-click) the app and select **Open**
-4. If you see an **Open** button in the dialog, click it — you're done
+**One-time steps (try launching first, then allow in settings):**
 
-If macOS blocks it without an Open button:
+- Unzip `OpenDiskTest.zip`
+- Drag `OpenDiskTest.app` into your `/Applications` folder (recommended)
+- Double-click the app to launch it
+- When the warning appears ("cannot be opened" / developer cannot be verified), click **OK** / **Done**
+- Open **System Settings** ( menu → System Settings)
+- Click **Privacy & Security** in the sidebar
+- Scroll all the way down to the **Security** section
+- Next to the OpenDiskTest message, click **Open Anyway**
+- In the confirmation dialog, click **Open**
 
-1. Open **System Settings → Privacy & Security**
-2. Scroll down to the security section — you'll see a message about OpenDiskTest being blocked
-3. Click **Open Anyway**, then confirm
-
-You only need to do this once. After that, the app opens normally.
+You only need to do this once. After that, double-clicking the app opens it normally.
 
 ## Features
 
