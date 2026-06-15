@@ -3,6 +3,8 @@ name: Build and Release
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: write
@@ -31,6 +33,17 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
 
+      - name: Test
+        run: |
+          xcodebuild -project OpenDiskTest.xcodeproj \
+            -scheme OpenDiskTest \
+            -configuration Debug \
+            -derivedDataPath build-test \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            test
+
       - name: Ad-hoc sign
         run: codesign --force --deep --sign - build/Build/Products/Release/OpenDiskTest.app
 
@@ -40,6 +53,7 @@ jobs:
           ditto -c -k --keepParent "$APP_PATH" OpenDiskTest.zip
 
       - name: Create or update release
+        if: github.event_name == 'push'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

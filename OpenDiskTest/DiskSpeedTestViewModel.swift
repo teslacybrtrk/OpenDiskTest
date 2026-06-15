@@ -1,15 +1,23 @@
 import Foundation
-import Combine
 
 class DiskSpeedTestViewModel: ObservableObject {
-    @Published var fileSize: Double = 10 // Default 10 MB
-    @Published var iterations: Int = 100 // Default 100 iterations
+    @Published var fileSize: Double = 10 { // Default 10 MB
+        didSet { UserDefaults.standard.set(fileSize, forKey: "fileSize") }
+    }
+    @Published var iterations: Int = 100 { // Default 100 iterations
+        didSet { UserDefaults.standard.set(iterations, forKey: "iterations") }
+    }
     @Published var isRunning = false
     @Published var currentIteration: Int = 0
 
     var progress: Double {
         iterations > 0 ? Double(currentIteration) / Double(iterations) : 0
     }
+
+    var canStartTests: Bool {
+        !isRunning && fileSize >= 0.1 && fileSize <= 4096 && iterations >= 1 && iterations <= 1000
+    }
+
     @Published var results: [TestResult] = [
         TestResult(name: "Sequential Write"),
         TestResult(name: "Sequential Read"),
@@ -17,11 +25,48 @@ class DiskSpeedTestViewModel: ObservableObject {
         TestResult(name: "Random Read")
     ]
     @Published var logs: [String] = []
-    
+
+    /// nil = use system temporary directory. When set, tests run in the user-chosen folder (persisted via security-scoped bookmark).
+    @Published var testDirectory: URL? = nil
+
     private let fileManager = FileManager.default
-    private var cancellables = Set<AnyCancellable>()
-    
+    private var securityScopedResource: URL? = nil
+
+    override init() {
+        super.init()
+        // Load persisted settings (didSet will re-save on override, which is harmless)
+        let savedSize = UserDefaults.standard.double(forKey: "fileSize")
+        if savedSize >= 0.1 { fileSize = savedSize }
+        let savedIters = UserDefaults.standard.integer(forKey: "iterations")
+        if savedIters >= 1 { iterations = savedIters }
+
+        loadTestDirectoryBookmark()
+    }
+
+    private func loadTestDirectoryBookmark() {
+        guard let bookmarkData = UserDefaults.standard.data(forKey: "testDirectoryBookmark") else { return }
+        do {
+            var isStale = false
+            let url = try URL(resolvingBookmarkData: bookmarkData, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &isStale)
+            if isStale {
+                UserDefaults.standard.removeObject(forKey: "testDirectoryBookmark")
+                return
+            }
+            testDirectory = url
+            if url.startAccessingSecurityScopedResource() {
+                securityScopedResource = url
+            }
+        } catch {
+            UserDefaults.standard.removeObject(forKey: "testDirectoryBookmark")
+        }
+    }
+
     func runTests() {
+        guard canStartTests else {
+            addLog("Invalid parameters: file size must be 0.1–4096 MB and iterations 1–1000")
+            return
+        }
+
         isRunning = true
         currentIteration = 0
         results = results.map { TestResult(name: $0.name) }
@@ -80,7 +125,59 @@ class DiskSpeedTestViewModel: ObservableObject {
         isRunning = false
         addLog("Tests stopped by user")
     }
-    
+
+    // MARK: - Test location (custom directory support)
+
+    func chooseTestDirectory(_ url: URL) {
+        // Release previous scoped access
+        if let prev = securityScopedResource {
+            prev.stopAccessingSecurityScopedResource()
+            securityScopedResource = nil
+        }
+
+        do {
+            let bookmark = try url.bookmarkData(options: [.withSecurityScope],
+                                                includingResourceValuesForKeys: nil,
+                                                relativeTo: nil)
+            UserDefaults.standard.set(bookmark, forKey: "testDirectoryBookmark")
+
+            var isStale = false
+            let resolved = try URL(resolvingBookmarkData: bookmark,
+                                   options: .withSecurityScope,
+                                   relativeTo: nil,
+                                   bookmarkDataIsStale: &isStale)
+            if isStale {
+                addLog("Selected directory bookmark is stale; falling back to temporary directory")
+                resetToTemporaryDirectory()
+                return
+            }
+
+            testDirectory = resolved
+            if resolved.startAccessingSecurityScopedResource() {
+                securityScopedResource = resolved
+            }
+            addLog("Test location set to: \(resolved.path)")
+            resetResults()
+        } catch {
+            addLog("Failed to bookmark chosen test directory: \(error)")
+        }
+    }
+
+    func resetToTemporaryDirectory() {
+        if let prev = securityScopedResource {
+            prev.stopAccessingSecurityScopedResource()
+            securityScopedResource = nil
+        }
+        UserDefaults.standard.removeObject(forKey: "testDirectoryBookmark")
+        testDirectory = nil
+        addLog("Test location reset to temporary directory")
+        resetResults()
+    }
+
+    private func resetResults() {
+        results = results.map { TestResult(name: $0.name) }
+    }
+
     private func updateTest(index: Int, name: String, operation: () -> Double) {
         let speed = operation()
         DispatchQueue.main.async {
@@ -98,8 +195,8 @@ class DiskSpeedTestViewModel: ObservableObject {
     }
     
     private func getTestFileURL() -> URL {
-        let tempDirectoryURL = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
-        return tempDirectoryURL.appendingPathComponent("diskspeedtest.tmp")
+        let baseDir = testDirectory ?? URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
+        return baseDir.appendingPathComponent("diskspeedtest.tmp")
     }
     
     // Disk operation methods
@@ -146,6 +243,7 @@ class DiskSpeedTestViewModel: ObservableObject {
             defer { fileHandle.closeFile() }
             
             for _ in 0..<chunks {
+                guard isRunning else { break }
                 let offset = UInt64(arc4random_uniform(UInt32(size)))
                 fileHandle.seek(toFileOffset: offset)
                 fileHandle.write(data)
@@ -172,6 +270,7 @@ class DiskSpeedTestViewModel: ObservableObject {
             let chunks = fileSize / chunkSize
             
             for _ in 0..<chunks {
+                guard isRunning else { break }
                 let offset = UInt64(arc4random_uniform(UInt32(fileSize)))
                 fileHandle.seek(toFileOffset: offset)
                 _ = fileHandle.readData(ofLength: chunkSize)
