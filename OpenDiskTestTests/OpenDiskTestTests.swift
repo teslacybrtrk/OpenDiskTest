@@ -44,6 +44,11 @@ final class OpenDiskTestTests: XCTestCase {
     // MARK: - ViewModel configuration & validation
 
     func testViewModelDefaultCanStartIsTrue() throws {
+        // Ensure clean UserDefaults state so the persistence logic doesn't pollute the "default" assertion
+        UserDefaults.standard.removeObject(forKey: "fileSize")
+        UserDefaults.standard.removeObject(forKey: "iterations")
+        UserDefaults.standard.removeObject(forKey: "testDirectoryBookmark")
+
         let vm = DiskSpeedTestViewModel()
         // Fresh VM should have valid defaults
         XCTAssertTrue(vm.canStartTests)
