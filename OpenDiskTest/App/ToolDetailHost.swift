@@ -19,6 +19,8 @@ struct ToolDetailHost: View {
                 SystemMonitorView()
             case .networkTest:
                 NetworkTestView()
+            case .spaceAnalyzer:
+                SpaceAnalyzerView()
             default:
                 ToolPlaceholderView(descriptor: kind.descriptor)
             }

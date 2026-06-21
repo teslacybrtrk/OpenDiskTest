@@ -11,7 +11,10 @@
 		17B311E3201E7708366CA969 /* DiskSpeedDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75127E4BF870A73A4479E704 /* DiskSpeedDetailView.swift */; };
 		1AF611E026DEEB5E77E761CC /* UpdateUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = B16F1E9CAB86BADDB15A3A82 /* UpdateUI.swift */; };
 		2B657194337BFCA81AC5B979 /* NetworkProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = C01E384CA0AEBE536725EC62 /* NetworkProbe.swift */; };
+		3A0D9DBF60FF7A3A15C227D1 /* SpaceAnalyzerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71A2E46EB744F02623550FD0 /* SpaceAnalyzerView.swift */; };
+		42C532C7F2F91ED2F3D6E222 /* FileScanEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A683B3906AE26E0A08827492 /* FileScanEngine.swift */; };
 		544A8D2C30373D157EFF7EF5 /* SystemMonitorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD50A09EF00AF7EB9F6DE15A /* SystemMonitorView.swift */; };
+		6BAAC259BA298C97D08DF06E /* Treemap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CC7F7FCFD34A3EF0AB8D56F /* Treemap.swift */; };
 		6ED7563DF3364AB35D8BC6DA /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6CE45F3A1B1A576C637DD2 /* DashboardView.swift */; };
 		71398B82E70D36050E333C65 /* Color+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BFB34F648ECF870EC351BBC /* Color+Hex.swift */; };
 		74A2E1C50D2832291AE85538 /* ToolDetailHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B3A7BDD7592FF1FAFB35FA4 /* ToolDetailHost.swift */; };
@@ -21,7 +24,9 @@
 		9078F19C2D2C19860E356FCE /* SystemSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = A325A5151A1D449F2EFE63D9 /* SystemSnapshot.swift */; };
 		922D186A1289B0FC4081B99D /* NetworkTestViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C676B4CB2365F9B8162C87 /* NetworkTestViewModel.swift */; };
 		AA00000200000000AABBCC02 /* BuildInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000400000000AABBCC04 /* BuildInfo.swift */; };
+		B10ECAF9A36B446627F7542F /* ScanNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CF80F5D2998CFE2447F23D6 /* ScanNode.swift */; };
 		BDF4AC5DB17694376100C675 /* UpdateChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0FE769877FE67ABD629E294 /* UpdateChecker.swift */; };
+		D58E77F95FFF07844742BF99 /* SpaceAnalyzerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B8304EFA228CD3E63E9F05A /* SpaceAnalyzerViewModel.swift */; };
 		DB6DFF4C5C8C1867BA992504 /* SuiteCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFB6B717229EAA536778A5F1 /* SuiteCard.swift */; };
 		ED01686E44DC646A48C42CB2 /* NetworkTestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F138390EECBCB4E709F1963 /* NetworkTestView.swift */; };
 		F720D202C334196346B86F6E /* SystemMonitorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5345B9F12280DF31E91A6C20 /* SystemMonitorViewModel.swift */; };
@@ -56,11 +61,16 @@
 		0BFB34F648ECF870EC351BBC /* Color+Hex.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
 		18C676B4CB2365F9B8162C87 /* NetworkTestViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NetworkTestViewModel.swift; sourceTree = "<group>"; };
 		2E397EFF83B61C190F176718 /* DiskSpeedTestViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DiskSpeedTestViewModel.swift; sourceTree = "<group>"; };
+		3CF80F5D2998CFE2447F23D6 /* ScanNode.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ScanNode.swift; sourceTree = "<group>"; };
+		4CC7F7FCFD34A3EF0AB8D56F /* Treemap.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Treemap.swift; sourceTree = "<group>"; };
 		5345B9F12280DF31E91A6C20 /* SystemMonitorViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SystemMonitorViewModel.swift; sourceTree = "<group>"; };
 		5F138390EECBCB4E709F1963 /* NetworkTestView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NetworkTestView.swift; sourceTree = "<group>"; };
+		71A2E46EB744F02623550FD0 /* SpaceAnalyzerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SpaceAnalyzerView.swift; sourceTree = "<group>"; };
 		75127E4BF870A73A4479E704 /* DiskSpeedDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DiskSpeedDetailView.swift; sourceTree = "<group>"; };
 		75D0FCE8A83344670CF2A354 /* SuiteModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SuiteModel.swift; sourceTree = "<group>"; };
+		8B8304EFA228CD3E63E9F05A /* SpaceAnalyzerViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SpaceAnalyzerViewModel.swift; sourceTree = "<group>"; };
 		A325A5151A1D449F2EFE63D9 /* SystemSnapshot.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SystemSnapshot.swift; sourceTree = "<group>"; };
+		A683B3906AE26E0A08827492 /* FileScanEngine.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FileScanEngine.swift; sourceTree = "<group>"; };
 		AA00000400000000AABBCC04 /* BuildInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildInfo.swift; sourceTree = "<group>"; };
 		AF6CE45F3A1B1A576C637DD2 /* DashboardView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		AFB6B717229EAA536778A5F1 /* SuiteCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SuiteCard.swift; sourceTree = "<group>"; };
@@ -113,6 +123,7 @@
 			isa = PBXGroup;
 			children = (
 				2B293526B0A52AC1DB2D4CEA /* Sensors */,
+				FA1D45F4DAAE42ED0E589395 /* FileScanEngine */,
 			);
 			name = Shared;
 			path = Shared;
@@ -193,6 +204,17 @@
 			path = App;
 			sourceTree = "<group>";
 		};
+		C45A6B027EC9AB9A50EAEE2E /* SpaceAnalyzer */ = {
+			isa = PBXGroup;
+			children = (
+				4CC7F7FCFD34A3EF0AB8D56F /* Treemap.swift */,
+				8B8304EFA228CD3E63E9F05A /* SpaceAnalyzerViewModel.swift */,
+				71A2E46EB744F02623550FD0 /* SpaceAnalyzerView.swift */,
+			);
+			name = SpaceAnalyzer;
+			path = SpaceAnalyzer;
+			sourceTree = "<group>";
+		};
 		E29CF67E1738E6493ECF7FA3 /* Tools */ = {
 			isa = PBXGroup;
 			children = (
@@ -200,9 +222,20 @@
 				BDBEB48BEF290063A1150BE8 /* ToolKind.swift */,
 				3AAFAFC149CC452E8161A4A5 /* SystemMonitor */,
 				23CAC8CAE3E7806EB43A1D32 /* NetworkTest */,
+				C45A6B027EC9AB9A50EAEE2E /* SpaceAnalyzer */,
 			);
 			name = Tools;
 			path = Tools;
+			sourceTree = "<group>";
+		};
+		FA1D45F4DAAE42ED0E589395 /* FileScanEngine */ = {
+			isa = PBXGroup;
+			children = (
+				3CF80F5D2998CFE2447F23D6 /* ScanNode.swift */,
+				A683B3906AE26E0A08827492 /* FileScanEngine.swift */,
+			);
+			name = FileScanEngine;
+			path = FileScanEngine;
 			sourceTree = "<group>";
 		};
 		FE1F6DD62C8FBF0200848175 = {
@@ -439,6 +472,11 @@
 				2B657194337BFCA81AC5B979 /* NetworkProbe.swift in Sources */,
 				922D186A1289B0FC4081B99D /* NetworkTestViewModel.swift in Sources */,
 				ED01686E44DC646A48C42CB2 /* NetworkTestView.swift in Sources */,
+				B10ECAF9A36B446627F7542F /* ScanNode.swift in Sources */,
+				42C532C7F2F91ED2F3D6E222 /* FileScanEngine.swift in Sources */,
+				6BAAC259BA298C97D08DF06E /* Treemap.swift in Sources */,
+				D58E77F95FFF07844742BF99 /* SpaceAnalyzerViewModel.swift in Sources */,
+				3A0D9DBF60FF7A3A15C227D1 /* SpaceAnalyzerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
