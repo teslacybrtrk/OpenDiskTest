@@ -305,13 +305,48 @@ struct ContentView: View {
                 }
             }
             .padding(.horizontal, 24)
-            .padding(.vertical, 16)
+            .padding(.top, 16)
+            .padding(.bottom, 10)
+
+            optionsRow
 
             // Progress bar (visible once any test has started)
             if viewModel.isRunning || viewModel.currentIteration > 0 {
                 progressBar
             }
         }
+    }
+
+    private var optionsRow: some View {
+        HStack(spacing: 18) {
+            HStack(spacing: 8) {
+                Text("Block Size")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(Theme.secondaryText)
+                Picker("", selection: $viewModel.blockSizeKB) {
+                    ForEach(DiskSpeedTestViewModel.blockSizeOptions, id: \.self) { kb in
+                        Text(kb >= 1024 ? "\(kb / 1024) MB" : "\(kb) KB").tag(kb)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 170)
+                .disabled(viewModel.isRunning)
+                .help("I/O block size for random tests. Smaller blocks stress IOPS; larger blocks favor throughput.")
+            }
+
+            Toggle(isOn: $viewModel.bypassCache) {
+                Text("Bypass cache")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(Theme.secondaryText)
+            }
+            .toggleStyle(.checkbox)
+            .disabled(viewModel.isRunning)
+            .help("Disable the OS file cache (F_NOCACHE) so results reflect true disk speed instead of RAM.")
+
+            Spacer()
+        }
+        .padding(.horizontal, 24)
+        .padding(.bottom, 12)
     }
 
     private var progressBar: some View {
@@ -524,6 +559,26 @@ struct TestCard: View {
                 StatCell(label: "MAX", value: result.maxSpeed, color: Color(hex: "5CFF8A"))
             }
             .frame(height: 58)
+
+            // IOPS row (random tests only)
+            if result.isRandom && !result.iopsSamples.isEmpty {
+                Divider().background(Theme.border)
+                HStack(spacing: 6) {
+                    Text("IOPS")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundColor(Theme.secondaryText)
+                        .kerning(1.2)
+                    Spacer()
+                    Text(String(format: "%.0f", result.avgIOPS))
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundColor(accent)
+                    Text("avg")
+                        .font(.system(size: 9))
+                        .foregroundColor(Theme.secondaryText)
+                }
+                .padding(.horizontal, 14)
+                .frame(height: 30)
+            }
         }
         .background(Theme.card)
         .clipShape(RoundedRectangle(cornerRadius: 10))
