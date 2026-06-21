@@ -23,8 +23,8 @@ struct ToolDetailHost: View {
                 SpaceAnalyzerView()
             case .duplicateFinder:
                 DuplicateFinderView()
-            default:
-                ToolPlaceholderView(descriptor: kind.descriptor)
+            case .cleanup:
+                CleanupView()
             }
         }
         .navigationTitle(kind.descriptor.title)
