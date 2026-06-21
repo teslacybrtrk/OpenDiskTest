@@ -1,6 +1,7 @@
 import SwiftUI
 import Charts
 import UniformTypeIdentifiers
+import AppKit
 
 // MARK: - Theme
 
@@ -31,6 +32,7 @@ struct ContentView: View {
     @Environment(\.openWindow) private var openWindow
 
     @State private var isChoosingLocation = false
+    @State private var didCopyResults = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -359,12 +361,59 @@ struct ContentView: View {
             if viewModel.results.allSatisfy({ $0.speeds.isEmpty }) {
                 emptyState
             } else {
-                HStack(alignment: .top, spacing: 16) {
-                    ForEach(viewModel.results) { result in
-                        TestCard(result: result)
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Text("Results")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(Theme.secondaryText)
+                        Spacer()
+                        copyResultsButton
+                    }
+                    HStack(alignment: .top, spacing: 16) {
+                        ForEach(viewModel.results) { result in
+                            TestCard(result: result)
+                        }
                     }
                 }
             }
+        }
+    }
+
+    private var copyResultsButton: some View {
+        Button {
+            copyResults()
+        } label: {
+            HStack(spacing: 5) {
+                Image(systemName: didCopyResults ? "checkmark" : "doc.on.doc")
+                    .font(.system(size: 10, weight: .semibold))
+                Text(didCopyResults ? "Copied" : "Copy Results")
+                    .font(.system(size: 11, weight: .semibold))
+            }
+            .foregroundColor(didCopyResults ? Color(hex: "3FB950") : .white)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 5)
+            .background(
+                didCopyResults
+                    ? AnyShapeStyle(Color.white.opacity(0.08))
+                    : AnyShapeStyle(LinearGradient(
+                        colors: [Color(hex: "00BFFF"), Color(hex: "C84FFF")],
+                        startPoint: .leading, endPoint: .trailing))
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+        }
+        .buttonStyle(PlainButtonStyle())
+        .disabled(viewModel.isRunning || !viewModel.hasResults)
+        .help("Copy a shareable text summary of these results to the clipboard")
+    }
+
+    private func copyResults() {
+        let report = viewModel.resultsReport()
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(report, forType: .string)
+        viewModel.addLog("Results copied to clipboard")
+        didCopyResults = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
+            didCopyResults = false
         }
     }
 

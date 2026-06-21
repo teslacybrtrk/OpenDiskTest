@@ -188,6 +188,42 @@ class DiskSpeedTestViewModel: ObservableObject {
         }
     }
     
+    /// True once at least one test has recorded a measurement.
+    var hasResults: Bool { results.contains { !$0.speeds.isEmpty } }
+
+    /// Builds a plain-text, shareable report of the current run (config + per-test
+    /// min/avg/max). Used by the "Copy Results" button.
+    func resultsReport() -> String {
+        func pad(_ s: String, _ width: Int) -> String {
+            s.count >= width ? s : s + String(repeating: " ", count: width - s.count)
+        }
+        let location = testDirectory?.path ?? "System temp directory"
+        var out = """
+        OpenDiskTest Results
+        Build:      \(String(BuildInfo.commitSHA.prefix(7)))
+        Date:       \(DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .short))
+        File size:  \(String(format: "%.2f", fileSize)) MB
+        Iterations: \(iterations)
+        Location:   \(location)
+
+        """
+        func row(_ name: String, _ a: String, _ b: String, _ c: String) -> String {
+            var line = pad(name, 18)
+            line += pad(a, 11)
+            line += pad(b, 11)
+            line += pad(c, 11)
+            return line
+        }
+        out += row("Test", "Min", "Avg", "Max") + "(MB/s)\n"
+        for r in results where !r.speeds.isEmpty {
+            let minS = String(format: "%.2f", r.minSpeed)
+            let avgS = String(format: "%.2f", r.avgSpeed)
+            let maxS = String(format: "%.2f", r.maxSpeed)
+            out += row(r.name, minS, avgS, maxS) + "\n"
+        }
+        return out
+    }
+
     func addLog(_ message: String) {
         DispatchQueue.main.async {
             self.logs.append("[\(DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium))] \(message)")
