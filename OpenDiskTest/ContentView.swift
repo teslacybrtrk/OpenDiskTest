@@ -81,35 +81,46 @@ struct ContentView: View {
                     endPoint: .trailing
                 ))
 
-            Text("A new version is available")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(.white)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("A new version is available")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.white)
+                if !updateChecker.latestVersionName.isEmpty {
+                    Text(updateChecker.latestVersionName)
+                        .font(.system(size: 10))
+                        .foregroundColor(Theme.secondaryText)
+                }
+            }
 
             Spacer()
 
-            Button {
-                updateChecker.updateAvailable = false
-            } label: {
-                Text("Dismiss")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(Theme.secondaryText)
-            }
-            .buttonStyle(PlainButtonStyle())
-
-            if updateChecker.isDownloading {
-                ProgressView(value: updateChecker.downloadProgress)
-                    .progressViewStyle(.linear)
-                    .frame(width: 120)
-                    .tint(Color(hex: "00BFFF"))
-                Text("\(Int(updateChecker.downloadProgress * 100))%")
+            if updateChecker.isDownloading || !updateChecker.statusMessage.isEmpty {
+                if updateChecker.isDownloading {
+                    ProgressView(value: updateChecker.downloadProgress)
+                        .progressViewStyle(.linear)
+                        .frame(width: 120)
+                        .tint(Color(hex: "00BFFF"))
+                }
+                Text(updateChecker.isDownloading
+                     ? "\(Int(updateChecker.downloadProgress * 100))%"
+                     : updateChecker.statusMessage)
                     .font(.system(size: 11, weight: .medium, design: .rounded))
                     .foregroundColor(Theme.secondaryText)
-                    .frame(width: 36, alignment: .trailing)
+                    .frame(minWidth: 36, alignment: .trailing)
             } else {
+                Button {
+                    updateChecker.updateAvailable = false
+                } label: {
+                    Text("Dismiss")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(Theme.secondaryText)
+                }
+                .buttonStyle(PlainButtonStyle())
+
                 Button {
                     updateChecker.performUpdate()
                 } label: {
-                    Text("Download Update")
+                    Text("Update & Relaunch")
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundColor(.white)
                         .padding(.horizontal, 12)
@@ -122,7 +133,9 @@ struct ContentView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 6))
                 }
                 .buttonStyle(PlainButtonStyle())
-                .help("Downloads the new version and places a ready-to-use OpenDiskTest (new).app in your Downloads folder. Quit this app, then drag the new one over your existing app to update (this app is not notarized, so manual update is required).")
+                .help(updateChecker.releaseNotes.isEmpty
+                      ? "Downloads and installs the new version, then relaunches automatically. If the app is in a read-only location, a ready-to-use copy is placed in your Downloads folder to drag over the old one instead."
+                      : updateChecker.releaseNotes)
             }
         }
         .padding(.horizontal, 24)

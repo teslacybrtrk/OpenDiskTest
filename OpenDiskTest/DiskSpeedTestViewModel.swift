@@ -188,7 +188,7 @@ class DiskSpeedTestViewModel: ObservableObject {
         }
     }
     
-    private func addLog(_ message: String) {
+    func addLog(_ message: String) {
         DispatchQueue.main.async {
             self.logs.append("[\(DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium))] \(message)")
         }
