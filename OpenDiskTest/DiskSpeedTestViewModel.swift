@@ -2,6 +2,8 @@ import Foundation
 import Combine
 import DiskArbitration
 import IOKit
+import UserNotifications
+import AppKit
 
 class DiskSpeedTestViewModel: ObservableObject {
     @Published var fileSize: Double = 10 { // Default 10 MB
@@ -72,6 +74,22 @@ class DiskSpeedTestViewModel: ObservableObject {
         loadTestDirectoryBookmark()
         refreshDriveInfo()
         loadHistory()
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
+    }
+
+    /// Posts a local notification when a run finishes while the app is in the background,
+    /// so a long benchmark can be left running.
+    private func notifyCompletionIfBackgrounded() {
+        guard !NSApp.isActive else { return }
+        let seqRead = results.first { $0.name == "Sequential Read" }?.avgSpeed ?? 0
+        let seqWrite = results.first { $0.name == "Sequential Write" }?.avgSpeed ?? 0
+        let content = UNMutableNotificationContent()
+        content.title = "Benchmark complete"
+        let where_ = driveInfo?.volumeName ?? "disk"
+        content.body = String(format: "%@ — read %.0f MB/s, write %.0f MB/s", where_, seqRead, seqWrite)
+        content.sound = .default
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+        UNUserNotificationCenter.current().add(request)
     }
 
     // MARK: - Presets
@@ -209,7 +227,10 @@ class DiskSpeedTestViewModel: ObservableObject {
             DispatchQueue.main.async {
                 self.isRunning = false
                 self.addLog("All tests completed")
-                if completedNaturally { self.recordRun() }
+                if completedNaturally {
+                    self.recordRun()
+                    self.notifyCompletionIfBackgrounded()
+                }
             }
 
             try? self.fileManager.removeItem(at: testFileURL)
