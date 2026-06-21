@@ -287,117 +287,38 @@ struct ContentView: View {
 
                 Spacer()
 
-                // Inputs
-                HStack(spacing: 12) {
-                    InputField(title: "File Size (MB)", value: $viewModel.fileSize)
-                    InputField(title: "Iterations", value: Binding(
-                        get: { Double(viewModel.iterations) },
-                        set: { viewModel.iterations = Int($0) }
-                    ))
-                }
-
-                Spacer()
-
-                // Location picker + Controls (right side)
-                HStack(spacing: 12) {
-                    // Compact location chooser
-                    HStack(spacing: 6) {
-                        Button {
-                            isChoosingLocation = true
-                        } label: {
-                            Image(systemName: "folder.fill")
-                                .font(.system(size: 11, weight: .medium))
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        .foregroundColor(Theme.secondaryText)
-                        .help("Choose a custom test directory or volume (bookmark will be saved)")
-
-                        Group {
-                            if let dir = viewModel.testDirectory {
-                                Text(dir.lastPathComponent)
-                                    .font(.system(size: 10))
-                                    .foregroundColor(Theme.secondaryText)
-                                    .lineLimit(1)
-                                    .truncationMode(.middle)
-                                    .frame(maxWidth: 90, alignment: .leading)
-                                Button {
-                                    viewModel.resetToTemporaryDirectory()
-                                } label: {
-                                    Text("reset")
-                                        .font(.system(size: 9, weight: .medium))
-                                        .foregroundColor(Theme.secondaryText)
-                                }
-                                .buttonStyle(PlainButtonStyle())
-                                .help("Reset to system temporary directory")
-                            } else {
-                                Text("temp dir")
-                                    .font(.system(size: 10))
-                                    .foregroundColor(Theme.secondaryText)
-                            }
-                        }
+                // Appearance + secondary tools
+                HStack(spacing: 14) {
+                    Picker("", selection: $appearanceMode) {
+                        Image(systemName: "circle.lefthalf.filled").tag("system")
+                        Image(systemName: "sun.max").tag("light")
+                        Image(systemName: "moon.fill").tag("dark")
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Theme.cardInner)
-                    .clipShape(RoundedRectangle(cornerRadius: 5))
+                    .pickerStyle(.segmented)
+                    .frame(width: 108)
+                    .help("Appearance: follow System, Light, or Dark")
 
-                    // Controls
-                    HStack(spacing: 10) {
-                        if viewModel.isRunning {
-                            ControlButton(
-                                icon: "stop.fill",
-                                label: "Stop",
-                                color: Color(hex: "E53935"),
-                                disabled: false,
-                                action: viewModel.stopTests
-                            )
-                        } else {
-                            ControlButton(
-                                icon: "play.fill",
-                                label: "Run",
-                                color: Color(hex: "00C9A7"),
-                                disabled: !viewModel.canStartTests,
-                                action: viewModel.runTests
-                            )
-                        }
-                        ControlButton(
-                            icon: "checkmark.shield.fill",
-                            label: "Verify",
-                            color: Color(hex: "2C2C2C"),
-                            disabled: viewModel.isRunning || viewModel.sustainedRunning || viewModel.verifying,
-                            action: viewModel.verifyIntegrity
-                        )
-                        ControlButton(
-                            icon: "waveform.path.ecg",
-                            label: "Sustained",
-                            color: Color(hex: "2C2C2C"),
-                            disabled: false,
-                            action: { openWindow(id: "sustained") }
-                        )
-                        ControlButton(
-                            icon: "clock.arrow.circlepath",
-                            label: "History",
-                            color: Color(hex: "2C2C2C"),
-                            disabled: false,
-                            action: { openWindow(id: "history") }
-                        )
-                        ControlButton(
-                            icon: "doc.text.fill",
-                            label: "Log",
-                            color: Color(hex: "2C2C2C"),
-                            disabled: false,
-                            action: { openWindow(id: "log") }
-                        )
+                    HStack(spacing: 8) {
+                        toolButton(icon: "checkmark.shield", label: "Verify",
+                                   disabled: viewModel.isRunning || viewModel.sustainedRunning || viewModel.verifying,
+                                   action: viewModel.verifyIntegrity)
+                        toolButton(icon: "waveform.path.ecg", label: "Sustained",
+                                   action: { openWindow(id: "sustained") })
+                        toolButton(icon: "clock.arrow.circlepath", label: "History",
+                                   action: { openWindow(id: "history") })
+                        toolButton(icon: "doc.text", label: "Log",
+                                   action: { openWindow(id: "log") })
                     }
                 }
             }
             .padding(.horizontal, 24)
             .padding(.top, 16)
-            .padding(.bottom, 10)
+            .padding(.bottom, 14)
 
-            optionsRow
+            Divider().background(Theme.border)
 
-            driveInfoBar
+            configPanel
+            driveTargetCard
 
             // Progress bar (visible once any test has started)
             if viewModel.isRunning || viewModel.currentIteration > 0 {
@@ -406,46 +327,183 @@ struct ContentView: View {
         }
     }
 
-    @ViewBuilder
-    private var driveInfoBar: some View {
-        if let info = viewModel.driveInfo {
-            HStack(spacing: 10) {
-                Image(systemName: info.isSolidState == false ? "externaldrive.fill" : "internaldrive.fill")
-                    .font(.system(size: 13))
-                    .foregroundStyle(LinearGradient(
-                        colors: [Color(hex: "00BFFF"), Color(hex: "C84FFF")],
-                        startPoint: .leading, endPoint: .trailing))
+    // Compact secondary-tool button used in the app bar.
+    private func toolButton(icon: String, label: String, disabled: Bool = false, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 5) {
+                Image(systemName: icon).font(.system(size: 11, weight: .medium))
+                Text(label).font(.system(size: 11, weight: .medium))
+            }
+            .foregroundColor(Theme.secondaryText)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 5)
+            .background(Color.primary.opacity(0.06))
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .opacity(disabled ? 0.4 : 1)
+        }
+        .buttonStyle(PlainButtonStyle())
+        .disabled(disabled)
+        .help(label)
+    }
 
-                Text(info.volumeName)
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(Theme.primaryText)
-                    .lineLimit(1)
+    // MARK: Configuration panel
 
-                ForEach(driveTags(info), id: \.self) { tag in
-                    Text(tag)
-                        .font(.system(size: 9, weight: .semibold))
-                        .foregroundColor(Theme.secondaryText)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Color.white.opacity(0.06))
-                        .clipShape(RoundedRectangle(cornerRadius: 4))
+    private var configPanel: some View {
+        VStack(spacing: 14) {
+            HStack(alignment: .bottom, spacing: 16) {
+                InputField(title: "File Size (MB)", value: $viewModel.fileSize)
+                InputField(title: "Iterations", value: Binding(
+                    get: { Double(viewModel.iterations) },
+                    set: { viewModel.iterations = Int($0) }
+                ))
+                labeledControl("Block Size") {
+                    Picker("", selection: $viewModel.blockSizeKB) {
+                        ForEach(DiskSpeedTestViewModel.blockSizeOptions, id: \.self) { kb in
+                            Text(kb >= 1024 ? "\(kb / 1024) MB" : "\(kb) KB").tag(kb)
+                        }
+                    }
+                    .pickerStyle(.segmented).frame(width: 150).labelsHidden()
                 }
+                labeledControl("Queue Depth") {
+                    Picker("", selection: $viewModel.queueDepth) {
+                        ForEach(DiskSpeedTestViewModel.queueDepthOptions, id: \.self) { qd in
+                            Text("QD\(qd)").tag(qd)
+                        }
+                    }
+                    .pickerStyle(.menu).frame(width: 78).labelsHidden()
+                }
+                labeledControl("Cache") {
+                    Toggle(isOn: $viewModel.bypassCache) {
+                        Text("Bypass (F_NOCACHE)").font(.system(size: 11))
+                    }
+                    .toggleStyle(.checkbox)
+                    .help("Disable the OS file cache so results reflect true disk speed instead of RAM.")
+                }
+                Spacer()
+            }
+            .disabled(viewModel.isRunning)
 
-                if let model = info.mediaName {
-                    Text(model)
-                        .font(.system(size: 10))
-                        .foregroundColor(Theme.secondaryText)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
+            Divider().background(Theme.border)
+
+            HStack(spacing: 10) {
+                Text("Presets")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(Theme.secondaryText)
+                ForEach(BenchmarkPreset.all) { preset in
+                    Button { viewModel.applyPreset(preset) } label: {
+                        Text(preset.name)
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(Theme.primaryText)
+                            .padding(.horizontal, 10).padding(.vertical, 4)
+                            .background(Color.primary.opacity(0.07))
+                            .clipShape(RoundedRectangle(cornerRadius: 5))
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .disabled(viewModel.isRunning)
+                    .help("File \(String(format: "%.0f", preset.fileSizeMB)) MB · \(preset.iterations)× · \(preset.blockSizeKB) KB · QD\(preset.queueDepth)")
                 }
 
                 Spacer()
 
-                // Capacity
-                if info.totalBytes > 0 {
+                if viewModel.isRunning {
+                    ControlButton(icon: "stop.fill", label: "Stop", color: Color(hex: "E53935"),
+                                  disabled: false, action: viewModel.stopTests)
+                } else {
+                    ControlButton(icon: "play.fill", label: "Run", color: Color(hex: "00C9A7"),
+                                  disabled: !viewModel.canStartTests, action: viewModel.runTests)
+                }
+            }
+        }
+        .padding(18)
+        .background(Theme.card)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.border, lineWidth: 1))
+        .padding(.horizontal, 20)
+        .padding(.top, 16)
+    }
+
+    /// A label-on-top control cell for the config panel.
+    private func labeledControl<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(title.uppercased())
+                .font(.system(size: 9, weight: .bold))
+                .foregroundColor(Theme.secondaryText)
+                .kerning(0.8)
+            content()
+        }
+    }
+
+    @ViewBuilder
+    // MARK: Drive + target card
+
+    private var driveTargetCard: some View {
+        HStack(spacing: 14) {
+            let info = viewModel.driveInfo
+            Image(systemName: info?.isSolidState == false ? "externaldrive.fill" : "internaldrive.fill")
+                .font(.system(size: 16))
+                .foregroundStyle(LinearGradient(
+                    colors: [Color(hex: "00BFFF"), Color(hex: "C84FFF")],
+                    startPoint: .topLeading, endPoint: .bottomTrailing))
+
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 7) {
+                    Text(info?.volumeName ?? "Disk")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(Theme.primaryText)
+                        .lineLimit(1)
+                    if let info = info {
+                        ForEach(driveTags(info), id: \.self) { tag in
+                            Text(tag)
+                                .font(.system(size: 9, weight: .semibold))
+                                .foregroundColor(Theme.secondaryText)
+                                .padding(.horizontal, 6).padding(.vertical, 2)
+                                .background(Color.primary.opacity(0.07))
+                                .clipShape(RoundedRectangle(cornerRadius: 4))
+                        }
+                    }
+                    if let model = info?.mediaName {
+                        Text(model)
+                            .font(.system(size: 10))
+                            .foregroundColor(Theme.secondaryText)
+                            .lineLimit(1).truncationMode(.middle)
+                    }
+                }
+                // Location chooser
+                HStack(spacing: 6) {
+                    Image(systemName: "mappin.and.ellipse")
+                        .font(.system(size: 9))
+                        .foregroundColor(Theme.secondaryText)
+                    Text(viewModel.testDirectory?.path ?? "System temp directory")
+                        .font(.system(size: 10))
+                        .foregroundColor(Theme.secondaryText)
+                        .lineLimit(1).truncationMode(.middle)
+                    Button { isChoosingLocation = true } label: {
+                        Text("change").font(.system(size: 9, weight: .semibold))
+                            .foregroundColor(Color(hex: "00BFFF"))
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .help("Choose a custom test directory or volume")
+                    if viewModel.testDirectory != nil {
+                        Button { viewModel.resetToTemporaryDirectory() } label: {
+                            Text("reset").font(.system(size: 9, weight: .semibold))
+                                .foregroundColor(Theme.secondaryText)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .help("Reset to system temporary directory")
+                    }
+                }
+            }
+
+            Spacer()
+
+            if let info = info, info.totalBytes > 0 {
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text("\(byteString(info.freeBytes)) free of \(byteString(info.totalBytes))")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(Theme.secondaryText)
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
-                            Capsule().fill(Color.white.opacity(0.08))
+                            Capsule().fill(Color.primary.opacity(0.1))
                             Capsule()
                                 .fill(LinearGradient(
                                     colors: [Color(hex: "00BFFF"), Color(hex: "C84FFF")],
@@ -453,17 +511,17 @@ struct ContentView: View {
                                 .frame(width: max(2, geo.size.width * info.usedFraction))
                         }
                     }
-                    .frame(width: 90, height: 5)
-
-                    Text("\(byteString(info.freeBytes)) free of \(byteString(info.totalBytes))")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(Theme.secondaryText)
+                    .frame(width: 130, height: 5)
                 }
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 8)
-            .background(Theme.cardInner.opacity(0.5))
         }
+        .padding(14)
+        .background(Theme.card)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.border, lineWidth: 1))
+        .padding(.horizontal, 20)
+        .padding(.top, 12)
+        .padding(.bottom, 4)
     }
 
     private func driveTags(_ info: DriveInfo) -> [String] {
@@ -478,83 +536,6 @@ struct ContentView: View {
         ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
     }
 
-    private var optionsRow: some View {
-        HStack(spacing: 18) {
-            HStack(spacing: 8) {
-                Text("Block Size")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(Theme.secondaryText)
-                Picker("", selection: $viewModel.blockSizeKB) {
-                    ForEach(DiskSpeedTestViewModel.blockSizeOptions, id: \.self) { kb in
-                        Text(kb >= 1024 ? "\(kb / 1024) MB" : "\(kb) KB").tag(kb)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 170)
-                .disabled(viewModel.isRunning)
-                .help("I/O block size for random tests. Smaller blocks stress IOPS; larger blocks favor throughput.")
-            }
-
-            HStack(spacing: 8) {
-                Text("Queue Depth")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(Theme.secondaryText)
-                Picker("", selection: $viewModel.queueDepth) {
-                    ForEach(DiskSpeedTestViewModel.queueDepthOptions, id: \.self) { qd in
-                        Text("QD\(qd)").tag(qd)
-                    }
-                }
-                .pickerStyle(.menu)
-                .frame(width: 80)
-                .disabled(viewModel.isRunning)
-                .help("Concurrent in-flight I/O for the random tests. Higher queue depth unlocks the parallelism modern NVMe SSDs need for peak throughput.")
-            }
-
-            Toggle(isOn: $viewModel.bypassCache) {
-                Text("Bypass cache")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(Theme.secondaryText)
-            }
-            .toggleStyle(.checkbox)
-            .disabled(viewModel.isRunning)
-            .help("Disable the OS file cache (F_NOCACHE) so results reflect true disk speed instead of RAM.")
-
-            Picker("", selection: $appearanceMode) {
-                Image(systemName: "circle.lefthalf.filled").tag("system")
-                Image(systemName: "sun.max").tag("light")
-                Image(systemName: "moon.fill").tag("dark")
-            }
-            .pickerStyle(.segmented)
-            .frame(width: 110)
-            .help("Appearance: follow System, Light, or Dark")
-
-            Spacer()
-
-            Text("Presets")
-                .font(.system(size: 11, weight: .medium))
-                .foregroundColor(Theme.secondaryText)
-            HStack(spacing: 6) {
-                ForEach(BenchmarkPreset.all) { preset in
-                    Button {
-                        viewModel.applyPreset(preset)
-                    } label: {
-                        Text(preset.name)
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundColor(Theme.primaryText)
-                            .padding(.horizontal, 9)
-                            .padding(.vertical, 4)
-                            .background(Color.white.opacity(0.08))
-                            .clipShape(RoundedRectangle(cornerRadius: 5))
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .disabled(viewModel.isRunning)
-                    .help("File \(String(format: "%.0f", preset.fileSizeMB)) MB · \(preset.iterations) iterations · \(preset.blockSizeKB) KB block")
-                }
-            }
-        }
-        .padding(.horizontal, 24)
-        .padding(.bottom, 12)
-    }
 
     private var progressBar: some View {
         VStack(spacing: 0) {
