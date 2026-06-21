@@ -505,11 +505,12 @@ struct ContentView: View {
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(Theme.secondaryText)
                         Spacer()
+                        exportPNGButton
                         copyResultsButton
                     }
                     HStack(alignment: .top, spacing: 16) {
                         ForEach(viewModel.results) { result in
-                            TestCard(result: result)
+                            TestCard(result: result, isLive: viewModel.isRunning)
                         }
                     }
                 }
@@ -542,6 +543,86 @@ struct ContentView: View {
         .buttonStyle(PlainButtonStyle())
         .disabled(viewModel.isRunning || !viewModel.hasResults)
         .help("Copy a shareable text summary of these results to the clipboard")
+    }
+
+    private var exportPNGButton: some View {
+        Button {
+            exportPNG()
+        } label: {
+            HStack(spacing: 5) {
+                Image(systemName: "photo")
+                    .font(.system(size: 10, weight: .semibold))
+                Text("Export PNG")
+                    .font(.system(size: 11, weight: .semibold))
+            }
+            .foregroundColor(.white)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 5)
+            .background(Color.white.opacity(0.08))
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+        }
+        .buttonStyle(PlainButtonStyle())
+        .disabled(viewModel.isRunning || !viewModel.hasResults)
+        .help("Save a shareable PNG image of these results to your Downloads folder")
+    }
+
+    /// Off-screen view rendered to an image for PNG export.
+    private var resultsExportView: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 10) {
+                Image(systemName: "internaldrive.fill")
+                    .font(.system(size: 18))
+                    .foregroundStyle(LinearGradient(
+                        colors: [Color(hex: "00BFFF"), Color(hex: "C84FFF")],
+                        startPoint: .topLeading, endPoint: .bottomTrailing))
+                Text("OpenDiskTest")
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+                Spacer()
+                Text(DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .short))
+                    .font(.system(size: 11))
+                    .foregroundColor(Theme.secondaryText)
+            }
+            if let info = viewModel.driveInfo {
+                Text("\(info.volumeName) · \(info.mediaKind ?? "—") · \(info.connection ?? "—") · \(info.fileSystem)")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.white)
+            }
+            Text("\(String(format: "%.0f", viewModel.fileSize)) MB · \(viewModel.iterations) iterations · \(viewModel.blockSizeKB) KB block · cache \(viewModel.bypassCache ? "bypassed" : "enabled")")
+                .font(.system(size: 11))
+                .foregroundColor(Theme.secondaryText)
+            HStack(alignment: .top, spacing: 16) {
+                ForEach(viewModel.results) { result in
+                    TestCard(result: result)
+                }
+            }
+        }
+        .padding(24)
+        .background(Theme.background)
+        .frame(width: 1000)
+    }
+
+    @MainActor
+    private func exportPNG() {
+        let renderer = ImageRenderer(content: resultsExportView)
+        renderer.scale = 2
+        guard let nsImage = renderer.nsImage,
+              let tiff = nsImage.tiffRepresentation,
+              let rep = NSBitmapImageRep(data: tiff),
+              let png = rep.representation(using: .png, properties: [:]),
+              let downloads = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first else {
+            viewModel.addLog("PNG export failed")
+            return
+        }
+        let stamp = Int(Date().timeIntervalSince1970)
+        let url = downloads.appendingPathComponent("OpenDiskTest-\(stamp).png")
+        do {
+            try png.write(to: url)
+            viewModel.addLog("Exported results PNG to Downloads: \(url.lastPathComponent)")
+            NSWorkspace.shared.activateFileViewerSelecting([url])
+        } catch {
+            viewModel.addLog("PNG export failed: \(error.localizedDescription)")
+        }
     }
 
     private func copyResults() {
@@ -740,8 +821,31 @@ private struct HistoryRow: View {
 
 // MARK: - TestCard
 
+/// Pulsing "LIVE" indicator shown on a card while its test is running.
+private struct LiveBadge: View {
+    @State private var on = false
+    var body: some View {
+        HStack(spacing: 4) {
+            Circle()
+                .fill(Color(hex: "3FB950"))
+                .frame(width: 6, height: 6)
+                .opacity(on ? 1 : 0.3)
+            Text("LIVE")
+                .font(.system(size: 9, weight: .bold))
+                .foregroundColor(Color(hex: "3FB950"))
+                .kerning(0.8)
+        }
+        .onAppear {
+            withAnimation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true)) {
+                on = true
+            }
+        }
+    }
+}
+
 struct TestCard: View {
     let result: TestResult
+    var isLive: Bool = false
 
     private var accent: Color { Theme.color(for: result.name) }
 
@@ -756,7 +860,9 @@ struct TestCard: View {
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundColor(.white)
                 Spacer()
-                if !result.speeds.isEmpty {
+                if isLive {
+                    LiveBadge()
+                } else if !result.speeds.isEmpty {
                     Text("\(result.speeds.count) run\(result.speeds.count == 1 ? "" : "s")")
                         .font(.system(size: 10))
                         .foregroundColor(Theme.secondaryText)
