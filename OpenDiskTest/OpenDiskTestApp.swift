@@ -34,5 +34,11 @@ struct OpenDiskTestApp: App {
         }
         .windowResizability(.contentMinSize)
         .defaultSize(width: 600, height: 400)
+
+        Window("Benchmark History", id: "history") {
+            HistoryView(viewModel: viewModel)
+        }
+        .windowResizability(.contentMinSize)
+        .defaultSize(width: 720, height: 460)
     }
 }

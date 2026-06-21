@@ -49,6 +49,11 @@ class DiskSpeedTestViewModel: ObservableObject {
     /// Info about the volume the tests will run on (model, SSD/HDD, connection, capacity).
     @Published var driveInfo: DriveInfo? = nil
 
+    /// Saved results of past completed runs (most recent first), persisted as JSON.
+    @Published var history: [BenchmarkRun] = []
+    private let historyKey = "benchmarkHistory"
+    private let historyLimit = 50
+
     private let fileManager = FileManager.default
     private var securityScopedResource: URL? = nil
 
@@ -66,6 +71,61 @@ class DiskSpeedTestViewModel: ObservableObject {
 
         loadTestDirectoryBookmark()
         refreshDriveInfo()
+        loadHistory()
+    }
+
+    // MARK: - Presets
+
+    func applyPreset(_ preset: BenchmarkPreset) {
+        fileSize = preset.fileSizeMB
+        iterations = preset.iterations
+        blockSizeKB = preset.blockSizeKB
+        addLog("Applied preset: \(preset.name)")
+    }
+
+    // MARK: - Benchmark history
+
+    private func loadHistory() {
+        guard let data = UserDefaults.standard.data(forKey: historyKey),
+              let runs = try? JSONDecoder().decode([BenchmarkRun].self, from: data) else { return }
+        history = runs
+    }
+
+    private func saveHistory() {
+        if let data = try? JSONEncoder().encode(history) {
+            UserDefaults.standard.set(data, forKey: historyKey)
+        }
+    }
+
+    func clearHistory() {
+        history.removeAll()
+        UserDefaults.standard.removeObject(forKey: historyKey)
+        addLog("Benchmark history cleared")
+    }
+
+    /// Snapshots the just-completed run into history.
+    private func recordRun() {
+        guard hasResults else { return }
+        let entries = results.filter { !$0.speeds.isEmpty }.map {
+            BenchmarkRun.Entry(name: $0.name, avgMBps: $0.avgSpeed, avgIOPS: $0.isRandom ? $0.avgIOPS : nil)
+        }
+        let run = BenchmarkRun(
+            id: UUID(),
+            date: Date(),
+            build: String(BuildInfo.commitSHA.prefix(7)),
+            volumeName: driveInfo?.volumeName,
+            mediaKind: driveInfo?.mediaKind,
+            locationPath: testDirectory?.path ?? "System temp directory",
+            fileSizeMB: fileSize,
+            iterations: iterations,
+            blockSizeKB: blockSizeKB,
+            bypassCache: bypassCache,
+            entries: entries
+        )
+        history.insert(run, at: 0)
+        if history.count > historyLimit { history = Array(history.prefix(historyLimit)) }
+        saveHistory()
+        addLog("Saved run to history (\(history.count) total)")
     }
 
     /// Loads volume/device details for the active test location off the main thread.
@@ -145,11 +205,13 @@ class DiskSpeedTestViewModel: ObservableObject {
                 self.addLog("Completed iteration \(iteration)")
             }
             
+            let completedNaturally = self.isRunning // false if the user pressed Stop
             DispatchQueue.main.async {
                 self.isRunning = false
                 self.addLog("All tests completed")
+                if completedNaturally { self.recordRun() }
             }
-            
+
             try? self.fileManager.removeItem(at: testFileURL)
             self.addLog("Removed test file from: \(testFileURL.path)")
         }
@@ -501,6 +563,47 @@ struct DriveInfo {
             return medium.lowercased().contains("solid")
         }
         return nil
+    }
+}
+
+/// A one-click benchmark configuration.
+struct BenchmarkPreset: Identifiable {
+    let name: String
+    let fileSizeMB: Double
+    let iterations: Int
+    let blockSizeKB: Int
+    var id: String { name }
+
+    static let all: [BenchmarkPreset] = [
+        BenchmarkPreset(name: "Quick",    fileSizeMB: 64,  iterations: 3, blockSizeKB: 1024),
+        BenchmarkPreset(name: "Default",  fileSizeMB: 128, iterations: 5, blockSizeKB: 1024),
+        BenchmarkPreset(name: "Thorough", fileSizeMB: 512, iterations: 9, blockSizeKB: 1024),
+        BenchmarkPreset(name: "4K IOPS",  fileSizeMB: 128, iterations: 5, blockSizeKB: 4),
+    ]
+}
+
+/// A persisted snapshot of one completed run, used by the History view.
+struct BenchmarkRun: Codable, Identifiable {
+    let id: UUID
+    let date: Date
+    let build: String
+    let volumeName: String?
+    let mediaKind: String?
+    let locationPath: String
+    let fileSizeMB: Double
+    let iterations: Int
+    let blockSizeKB: Int
+    let bypassCache: Bool
+    let entries: [Entry]
+
+    struct Entry: Codable {
+        let name: String
+        let avgMBps: Double
+        let avgIOPS: Double?
+    }
+
+    var configSummary: String {
+        "\(String(format: "%.0f", fileSizeMB)) MB · \(iterations)× · \(blockSizeKB) KB · cache \(bypassCache ? "off" : "on")"
     }
 }
 

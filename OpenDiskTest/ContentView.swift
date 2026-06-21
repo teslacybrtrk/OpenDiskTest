@@ -295,6 +295,13 @@ struct ContentView: View {
                             )
                         }
                         ControlButton(
+                            icon: "clock.arrow.circlepath",
+                            label: "History",
+                            color: Color(hex: "2C2C2C"),
+                            disabled: false,
+                            action: { openWindow(id: "history") }
+                        )
+                        ControlButton(
                             icon: "doc.text.fill",
                             label: "Log",
                             color: Color(hex: "2C2C2C"),
@@ -418,6 +425,28 @@ struct ContentView: View {
             .help("Disable the OS file cache (F_NOCACHE) so results reflect true disk speed instead of RAM.")
 
             Spacer()
+
+            Text("Presets")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(Theme.secondaryText)
+            HStack(spacing: 6) {
+                ForEach(BenchmarkPreset.all) { preset in
+                    Button {
+                        viewModel.applyPreset(preset)
+                    } label: {
+                        Text(preset.name)
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 4)
+                            .background(Color.white.opacity(0.08))
+                            .clipShape(RoundedRectangle(cornerRadius: 5))
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .disabled(viewModel.isRunning)
+                    .help("File \(String(format: "%.0f", preset.fileSizeMB)) MB · \(preset.iterations) iterations · \(preset.blockSizeKB) KB block")
+                }
+            }
         }
         .padding(.horizontal, 24)
         .padding(.bottom, 12)
@@ -577,6 +606,135 @@ struct LogWindowView: View {
         }
         .background(Theme.background)
         .frame(minWidth: 400, minHeight: 200)
+    }
+}
+
+// MARK: - History
+
+struct HistoryView: View {
+    @ObservedObject var viewModel: DiskSpeedTestViewModel
+
+    private static let dateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateStyle = .medium
+        f.timeStyle = .short
+        return f
+    }()
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Image(systemName: "clock.arrow.circlepath")
+                    .font(.system(size: 11))
+                    .foregroundColor(Theme.secondaryText)
+                Text("Benchmark History")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(Theme.secondaryText)
+                Spacer()
+                if !viewModel.history.isEmpty {
+                    Text("\(viewModel.history.count) run\(viewModel.history.count == 1 ? "" : "s")")
+                        .font(.system(size: 10))
+                        .foregroundColor(Theme.secondaryText)
+                    Button {
+                        viewModel.clearHistory()
+                    } label: {
+                        Text("Clear")
+                            .font(.system(size: 11))
+                            .foregroundColor(Theme.secondaryText)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+
+            Divider().background(Theme.border)
+
+            if viewModel.history.isEmpty {
+                VStack(spacing: 10) {
+                    Image(systemName: "clock.badge.questionmark")
+                        .font(.system(size: 36))
+                        .foregroundColor(Color(hex: "2C2C2C"))
+                    Text("No saved runs yet")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(Color(hex: "4A4A4A"))
+                    Text("Completed benchmarks are saved here automatically")
+                        .font(.system(size: 11))
+                        .foregroundColor(Color(hex: "333333"))
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: 8) {
+                        ForEach(viewModel.history) { run in
+                            HistoryRow(run: run, dateFormatter: Self.dateFormatter)
+                        }
+                    }
+                    .padding(12)
+                }
+            }
+        }
+        .background(Theme.background)
+        .frame(minWidth: 520, minHeight: 300)
+    }
+}
+
+private struct HistoryRow: View {
+    let run: BenchmarkRun
+    let dateFormatter: DateFormatter
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Text(dateFormatter.string(from: run.date))
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(.white)
+                if let vol = run.volumeName {
+                    Text(vol)
+                        .font(.system(size: 10))
+                        .foregroundColor(Theme.secondaryText)
+                        .lineLimit(1)
+                }
+                if let kind = run.mediaKind {
+                    Text(kind)
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundColor(Theme.secondaryText)
+                        .padding(.horizontal, 5).padding(.vertical, 1)
+                        .background(Color.white.opacity(0.06))
+                        .clipShape(RoundedRectangle(cornerRadius: 3))
+                }
+                Spacer()
+                Text("build \(run.build)")
+                    .font(.system(size: 9, design: .monospaced))
+                    .foregroundColor(Theme.secondaryText)
+            }
+
+            Text(run.configSummary)
+                .font(.system(size: 10))
+                .foregroundColor(Theme.secondaryText)
+
+            HStack(spacing: 0) {
+                ForEach(run.entries, id: \.name) { entry in
+                    VStack(spacing: 2) {
+                        Text(entry.name)
+                            .font(.system(size: 9, weight: .medium))
+                            .foregroundColor(Theme.secondaryText)
+                            .lineLimit(1)
+                        Text(String(format: "%.1f", entry.avgMBps))
+                            .font(.system(size: 13, weight: .bold, design: .rounded))
+                            .foregroundColor(Theme.color(for: entry.name))
+                        Text(entry.avgIOPS.map { String(format: "%.0f IOPS", $0) } ?? "MB/s")
+                            .font(.system(size: 8))
+                            .foregroundColor(Theme.secondaryText)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+            }
+        }
+        .padding(12)
+        .background(Theme.card)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.border, lineWidth: 1))
     }
 }
 
