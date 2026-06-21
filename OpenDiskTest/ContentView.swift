@@ -6,11 +6,20 @@ import AppKit
 // MARK: - Theme
 
 enum Theme {
-    static let background    = Color(hex: "0D0D0D")
-    static let card          = Color(hex: "181818")
-    static let cardInner     = Color(hex: "111111")
-    static let border        = Color(hex: "2A2A2A")
-    static let secondaryText = Color(hex: "6E6E6E")
+    /// A color that resolves to the dark or light hex depending on the effective appearance.
+    private static func dynamic(dark: String, light: String) -> Color {
+        Color(nsColor: NSColor(name: nil) { appearance in
+            let isDark = appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+            return NSColor(Color(hex: isDark ? dark : light))
+        })
+    }
+
+    static let background    = dynamic(dark: "0D0D0D", light: "F2F2F4")
+    static let card          = dynamic(dark: "181818", light: "FFFFFF")
+    static let cardInner     = dynamic(dark: "111111", light: "ECECEE")
+    static let border        = dynamic(dark: "2A2A2A", light: "D8D8DC")
+    static let secondaryText = dynamic(dark: "6E6E6E", light: "8A8A8E")
+    static let primaryText   = dynamic(dark: "F5F5F5", light: "1A1A1A")
 
     static let testColors: [String: Color] = [
         "Sequential Write": Color(hex: "FF6B35"),
@@ -33,6 +42,15 @@ struct ContentView: View {
 
     @State private var isChoosingLocation = false
     @State private var didCopyResults = false
+    @AppStorage("appearanceMode") private var appearanceMode = "system"
+
+    private func applyAppearance() {
+        switch appearanceMode {
+        case "light": NSApp.appearance = NSAppearance(named: .aqua)
+        case "dark":  NSApp.appearance = NSAppearance(named: .darkAqua)
+        default:      NSApp.appearance = nil // follow system
+        }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -49,6 +67,8 @@ struct ContentView: View {
         }
         .background(Theme.background)
         .frame(width: 960)
+        .onAppear { applyAppearance() }
+        .onChange(of: appearanceMode) { applyAppearance() }
         .animation(.easeInOut(duration: 0.25), value: viewModel.isRunning)
         .animation(.easeInOut(duration: 0.25), value: viewModel.currentIteration > 0)
         .animation(.easeInOut(duration: 0.25), value: updateChecker.updateAvailable)
@@ -209,7 +229,7 @@ struct ContentView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("OpenDiskTest")
                             .font(.system(size: 16, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
+                            .foregroundColor(Theme.primaryText)
                         HStack(spacing: 6) {
                             Text("macOS Disk Benchmark")
                                 .font(.system(size: 11))
@@ -338,7 +358,7 @@ struct ContentView: View {
 
                 Text(info.volumeName)
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(Theme.primaryText)
                     .lineLimit(1)
 
                 ForEach(driveTags(info), id: \.self) { tag in
@@ -424,6 +444,15 @@ struct ContentView: View {
             .disabled(viewModel.isRunning)
             .help("Disable the OS file cache (F_NOCACHE) so results reflect true disk speed instead of RAM.")
 
+            Picker("", selection: $appearanceMode) {
+                Image(systemName: "circle.lefthalf.filled").tag("system")
+                Image(systemName: "sun.max").tag("light")
+                Image(systemName: "moon.fill").tag("dark")
+            }
+            .pickerStyle(.segmented)
+            .frame(width: 110)
+            .help("Appearance: follow System, Light, or Dark")
+
             Spacer()
 
             Text("Presets")
@@ -436,7 +465,7 @@ struct ContentView: View {
                     } label: {
                         Text(preset.name)
                             .font(.system(size: 10, weight: .semibold))
-                            .foregroundColor(.white)
+                            .foregroundColor(Theme.primaryText)
                             .padding(.horizontal, 9)
                             .padding(.vertical, 4)
                             .background(Color.white.opacity(0.08))
@@ -555,7 +584,7 @@ struct ContentView: View {
                 Text("Export PNG")
                     .font(.system(size: 11, weight: .semibold))
             }
-            .foregroundColor(.white)
+            .foregroundColor(Theme.primaryText)
             .padding(.horizontal, 12)
             .padding(.vertical, 5)
             .background(Color.white.opacity(0.08))
@@ -577,7 +606,7 @@ struct ContentView: View {
                         startPoint: .topLeading, endPoint: .bottomTrailing))
                 Text("OpenDiskTest")
                     .font(.system(size: 18, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
+                    .foregroundColor(Theme.primaryText)
                 Spacer()
                 Text(DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .short))
                     .font(.system(size: 11))
@@ -586,7 +615,7 @@ struct ContentView: View {
             if let info = viewModel.driveInfo {
                 Text("\(info.volumeName) · \(info.mediaKind ?? "—") · \(info.connection ?? "—") · \(info.fileSystem)")
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.white)
+                    .foregroundColor(Theme.primaryText)
             }
             Text("\(String(format: "%.0f", viewModel.fileSize)) MB · \(viewModel.iterations) iterations · \(viewModel.blockSizeKB) KB block · cache \(viewModel.bypassCache ? "bypassed" : "enabled")")
                 .font(.system(size: 11))
@@ -769,7 +798,7 @@ private struct HistoryRow: View {
             HStack(spacing: 8) {
                 Text(dateFormatter.string(from: run.date))
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(Theme.primaryText)
                 if let vol = run.volumeName {
                     Text(vol)
                         .font(.system(size: 10))
@@ -858,7 +887,7 @@ struct TestCard: View {
                     .frame(width: 7, height: 7)
                 Text(result.name)
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(Theme.primaryText)
                 Spacer()
                 if isLive {
                     LiveBadge()
@@ -1100,7 +1129,7 @@ struct InputField: View {
             TextField("", value: $value, formatter: NumberFormatter())
                 .textFieldStyle(.plain)
                 .font(.system(size: 13, weight: .medium, design: .rounded))
-                .foregroundColor(.white)
+                .foregroundColor(Theme.primaryText)
                 .frame(width: 88)
                 .padding(.horizontal, 9)
                 .padding(.vertical, 5)
