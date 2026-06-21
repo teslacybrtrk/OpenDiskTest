@@ -60,6 +60,10 @@ struct ContentView: View {
                 updateBanner
             }
 
+            if viewModel.verifying || viewModel.verifyResult != nil {
+                verifyBanner
+            }
+
             Divider().background(Theme.border)
 
             resultsSection
@@ -163,6 +167,48 @@ struct ContentView: View {
         .padding(.horizontal, 24)
         .padding(.vertical, 10)
         .background(Color(hex: "1A1A2E"))
+    }
+
+    // MARK: Verify Banner
+
+    private var verifyBanner: some View {
+        HStack(spacing: 12) {
+            if viewModel.verifying {
+                Image(systemName: "checkmark.shield")
+                    .font(.system(size: 15))
+                    .foregroundColor(Color(hex: "00BFFF"))
+                Text("Verifying integrity…")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.white)
+                Spacer()
+                ProgressView(value: viewModel.verifyProgress)
+                    .progressViewStyle(.linear)
+                    .frame(width: 160)
+                    .tint(Color(hex: "00BFFF"))
+                Text("\(Int(viewModel.verifyProgress * 100))%")
+                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .foregroundColor(Theme.secondaryText)
+                Button { viewModel.stopVerify() } label: {
+                    Text("Stop").font(.system(size: 11, weight: .medium)).foregroundColor(Theme.secondaryText)
+                }
+                .buttonStyle(PlainButtonStyle())
+            } else {
+                Image(systemName: viewModel.verifyPassed ? "checkmark.seal.fill" : "xmark.octagon.fill")
+                    .font(.system(size: 15))
+                    .foregroundColor(viewModel.verifyPassed ? Color(hex: "3FB950") : Color(hex: "F85149"))
+                Text(viewModel.verifyResult ?? "")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.white)
+                Spacer()
+                Button { viewModel.dismissVerifyResult() } label: {
+                    Text("Dismiss").font(.system(size: 11, weight: .medium)).foregroundColor(Theme.secondaryText)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+        }
+        .padding(.horizontal, 24)
+        .padding(.vertical, 10)
+        .background(Color(hex: "151515"))
     }
 
     // MARK: Header
@@ -314,6 +360,13 @@ struct ContentView: View {
                                 action: viewModel.runTests
                             )
                         }
+                        ControlButton(
+                            icon: "checkmark.shield.fill",
+                            label: "Verify",
+                            color: Color(hex: "2C2C2C"),
+                            disabled: viewModel.isRunning || viewModel.sustainedRunning || viewModel.verifying,
+                            action: viewModel.verifyIntegrity
+                        )
                         ControlButton(
                             icon: "waveform.path.ecg",
                             label: "Sustained",
