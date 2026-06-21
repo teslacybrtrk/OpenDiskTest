@@ -29,6 +29,16 @@ class DiskSpeedTestViewModel: ObservableObject {
     }
     @Published var isRunning = false
 
+    // MARK: Sustained write test
+    @Published var sustainedRunning = false
+    @Published var sustainedSamples: [SustainedSample] = []
+    @Published var sustainedStatus = ""
+    /// Duration of the sustained write test in seconds.
+    @Published var sustainedDuration: Int = 30 {
+        didSet { UserDefaults.standard.set(sustainedDuration, forKey: "sustainedDuration") }
+    }
+    static let sustainedDurationOptions = [15, 30, 60, 120]
+
     /// Supported block sizes for the picker (KB).
     static let blockSizeOptions = [4, 64, 1024]
     /// Supported queue depths (concurrent workers) for the random tests.
@@ -79,6 +89,8 @@ class DiskSpeedTestViewModel: ObservableObject {
         }
         let savedQD = UserDefaults.standard.integer(forKey: "queueDepth")
         if Self.queueDepthOptions.contains(savedQD) { queueDepth = savedQD }
+        let savedDur = UserDefaults.standard.integer(forKey: "sustainedDuration")
+        if Self.sustainedDurationOptions.contains(savedDur) { sustainedDuration = savedDur }
 
         loadTestDirectoryBookmark()
         refreshDriveInfo()
@@ -257,6 +269,105 @@ class DiskSpeedTestViewModel: ObservableObject {
     func stopTests() {
         isRunning = false
         addLog("Tests stopped by user")
+    }
+
+    // MARK: - Sustained write test
+
+    func stopSustainedWrite() {
+        sustainedRunning = false
+    }
+
+    /// Continuously writes to a bounded ring-buffer file for `sustainedDuration` seconds,
+    /// sampling throughput ~2×/sec. Because total bytes written far exceed any SSD's SLC
+    /// write cache, the live graph reveals the cache cliff and thermal throttling.
+    func startSustainedWrite() {
+        guard !sustainedRunning, !isRunning else { return }
+        sustainedRunning = true
+        sustainedSamples = []
+        sustainedStatus = "Running…"
+
+        let url = getTestFileURL().deletingLastPathComponent().appendingPathComponent("diskspeedtest-sustained.tmp")
+        let block = 1024 * 1024 // 1 MB blocks for sustained throughput
+        let duration = Double(sustainedDuration)
+        // Ring buffer bounded by free space; large enough to be meaningful, capped at 4 GB.
+        let free = driveInfo?.freeBytes ?? 0
+        let cap = free > 0 ? min(Int64(4) << 30, max(Int64(256) << 20, free / 2)) : Int64(1) << 30
+        let ringSize = Int(cap)
+
+        addLog("Sustained write started — \(sustainedDuration)s, ring \(ByteCountFormatter.string(fromByteCount: cap, countStyle: .file))")
+
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            let fm = FileManager.default
+            if !fm.fileExists(atPath: url.path) {
+                fm.createFile(atPath: url.path, contents: nil)
+            }
+            guard let handle = try? FileHandle(forWritingTo: url) else {
+                DispatchQueue.main.async {
+                    self.sustainedRunning = false
+                    self.sustainedStatus = "Could not open test file"
+                }
+                return
+            }
+            if self.bypassCache { _ = fcntl(handle.fileDescriptor, F_NOCACHE, 1) }
+            let chunk = Data(count: block)
+
+            let start = Date()
+            var offset = 0
+            var bytesSinceSample = 0
+            var lastSampleTime = start
+
+            while self.sustainedRunning {
+                handle.seek(toFileOffset: UInt64(offset))
+                handle.write(chunk)
+                bytesSinceSample += block
+                offset += block
+                if offset + block > ringSize { offset = 0 }
+
+                let now = Date()
+                let sinceSample = now.timeIntervalSince(lastSampleTime)
+                if sinceSample >= 0.5 {
+                    fsync(handle.fileDescriptor)
+                    let mbps = Double(bytesSinceSample) / sinceSample / (1024 * 1024)
+                    let elapsed = now.timeIntervalSince(start)
+                    DispatchQueue.main.async {
+                        self.sustainedSamples.append(SustainedSample(elapsed: elapsed, mbps: mbps))
+                    }
+                    bytesSinceSample = 0
+                    lastSampleTime = now
+                }
+                if now.timeIntervalSince(start) >= duration { break }
+            }
+
+            try? handle.close()
+            try? fm.removeItem(at: url)
+            DispatchQueue.main.async {
+                let done = !self.sustainedRunning ? "stopped" : "complete"
+                self.sustainedRunning = false
+                self.sustainedStatus = self.sustainedSummary
+                self.addLog("Sustained write \(done) — \(self.sustainedSamples.count) samples")
+                if !NSApp.isActive { self.notifySustainedComplete() }
+            }
+        }
+    }
+
+    /// One-line summary of the sustained run (avg / peak / low + throttle note).
+    var sustainedSummary: String {
+        let speeds = sustainedSamples.map { $0.mbps }
+        guard let maxV = speeds.max(), let minV = speeds.dropFirst().min() ?? speeds.min(), !speeds.isEmpty else { return "" }
+        let avg = speeds.reduce(0, +) / Double(speeds.count)
+        let throttled = minV < maxV * 0.7
+        let note = throttled ? " · throttling detected" : " · steady"
+        return String(format: "avg %.0f · peak %.0f · low %.0f MB/s", avg, maxV, minV) + note
+    }
+
+    private func notifySustainedComplete() {
+        let content = UNMutableNotificationContent()
+        content.title = "Sustained write complete"
+        content.body = sustainedSummary
+        content.sound = .default
+        UNUserNotificationCenter.current().add(
+            UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil))
     }
 
     // MARK: - Test location (custom directory support)
@@ -513,6 +624,13 @@ class DiskSpeedTestViewModel: ObservableObject {
             latencies: allLatencies
         )
     }
+}
+
+/// A single throughput sample during the sustained write test.
+struct SustainedSample: Identifiable {
+    let id = UUID()
+    let elapsed: Double // seconds since start
+    let mbps: Double
 }
 
 /// One timed sample: throughput in MB/s, plus IOPS and per-operation latencies (ms)

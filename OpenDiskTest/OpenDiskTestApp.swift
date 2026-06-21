@@ -40,5 +40,11 @@ struct OpenDiskTestApp: App {
         }
         .windowResizability(.contentMinSize)
         .defaultSize(width: 720, height: 460)
+
+        Window("Sustained Write", id: "sustained") {
+            SustainedView(viewModel: viewModel)
+        }
+        .windowResizability(.contentMinSize)
+        .defaultSize(width: 720, height: 460)
     }
 }
