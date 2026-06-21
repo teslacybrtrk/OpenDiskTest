@@ -11,28 +11,14 @@ import AppKit
 
 struct DiskSpeedDetailView: View {
     @ObservedObject var viewModel: DiskSpeedTestViewModel
-    @ObservedObject var updateChecker: UpdateChecker
     @Environment(\.openWindow) private var openWindow
 
     @State private var isChoosingLocation = false
     @State private var didCopyResults = false
-    @AppStorage("appearanceMode") private var appearanceMode = "system"
-
-    private func applyAppearance() {
-        switch appearanceMode {
-        case "light": NSApp.appearance = NSAppearance(named: .aqua)
-        case "dark":  NSApp.appearance = NSAppearance(named: .darkAqua)
-        default:      NSApp.appearance = nil // follow system
-        }
-    }
 
     var body: some View {
         VStack(spacing: 0) {
             headerSection
-
-            if updateChecker.updateAvailable {
-                updateBanner
-            }
 
             if viewModel.verifying || viewModel.verifyResult != nil {
                 verifyBanner
@@ -40,16 +26,17 @@ struct DiskSpeedDetailView: View {
 
             Divider().background(Theme.border)
 
-            resultsSection
-                .padding(20)
+            ScrollView {
+                resultsSection
+                    .padding(20)
+                    .frame(maxWidth: 920)
+                    .frame(maxWidth: .infinity)
+            }
         }
         .background(Theme.background)
-        .frame(width: 960)
-        .onAppear { applyAppearance() }
-        .onChange(of: appearanceMode) { applyAppearance() }
+        .frame(minWidth: 720, minHeight: 480)
         .animation(.easeInOut(duration: 0.25), value: viewModel.isRunning)
         .animation(.easeInOut(duration: 0.25), value: viewModel.currentIteration > 0)
-        .animation(.easeInOut(duration: 0.25), value: updateChecker.updateAvailable)
         .fileImporter(
             isPresented: $isChoosingLocation,
             allowedContentTypes: [UTType.folder],
@@ -67,80 +54,6 @@ struct DiskSpeedDetailView: View {
                 print("Location selection error: \(error)")
             }
         }
-    }
-
-    // MARK: Update Banner
-
-    private var updateBanner: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "arrow.down.circle.fill")
-                .font(.system(size: 16))
-                .foregroundStyle(LinearGradient(
-                    colors: [Color(hex: "00BFFF"), Color(hex: "C84FFF")],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                ))
-
-            VStack(alignment: .leading, spacing: 1) {
-                Text("A new version is available")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.white)
-                if !updateChecker.latestVersionName.isEmpty {
-                    Text(updateChecker.latestVersionName)
-                        .font(.system(size: 10))
-                        .foregroundColor(Theme.secondaryText)
-                }
-            }
-
-            Spacer()
-
-            if updateChecker.isDownloading || !updateChecker.statusMessage.isEmpty {
-                if updateChecker.isDownloading {
-                    ProgressView(value: updateChecker.downloadProgress)
-                        .progressViewStyle(.linear)
-                        .frame(width: 120)
-                        .tint(Color(hex: "00BFFF"))
-                }
-                Text(updateChecker.isDownloading
-                     ? "\(Int(updateChecker.downloadProgress * 100))%"
-                     : updateChecker.statusMessage)
-                    .font(.system(size: 11, weight: .medium, design: .rounded))
-                    .foregroundColor(Theme.secondaryText)
-                    .frame(minWidth: 36, alignment: .trailing)
-            } else {
-                Button {
-                    updateChecker.updateAvailable = false
-                } label: {
-                    Text("Dismiss")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(Theme.secondaryText)
-                }
-                .buttonStyle(PlainButtonStyle())
-
-                Button {
-                    updateChecker.performUpdate()
-                } label: {
-                    Text("Update & Relaunch")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 5)
-                        .background(LinearGradient(
-                            colors: [Color(hex: "00BFFF"), Color(hex: "C84FFF")],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        ))
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-                }
-                .buttonStyle(PlainButtonStyle())
-                .help(updateChecker.releaseNotes.isEmpty
-                      ? "Downloads and installs the new version, then relaunches automatically. If the app is in a read-only location, a ready-to-use copy is placed in your Downloads folder to drag over the old one instead."
-                      : updateChecker.releaseNotes)
-            }
-        }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 10)
-        .background(Color(hex: "1A1A2E"))
     }
 
     // MARK: Verify Banner
@@ -187,102 +100,31 @@ struct DiskSpeedDetailView: View {
 
     // MARK: Header
 
-    // MARK: Version Badge
-
-    /// Shows the running build (short commit SHA) plus the latest update-check status.
-    /// After a self-update + relaunch, the SHA visibly changes — a quick confirmation
-    /// that the update was applied.
-    private var versionBadge: some View {
-        let (label, color, icon): (String, Color, String?) = {
-            switch updateChecker.checkStatus {
-            case .idle:            return ("", Theme.secondaryText, nil)
-            case .checking:        return ("Checking…", Theme.secondaryText, nil)
-            case .upToDate:        return ("Up to date", Color(hex: "3FB950"), "checkmark.circle.fill")
-            case .updateAvailable: return ("Update available", Color(hex: "D29922"), "arrow.down.circle.fill")
-            case .failed:          return ("Check failed", Color(hex: "F85149"), "exclamationmark.triangle.fill")
-            }
-        }()
-
-        return HStack(spacing: 6) {
-            Text("build \(String(BuildInfo.commitSHA.prefix(7)))")
-                .font(.system(size: 10, weight: .medium, design: .monospaced))
-                .foregroundColor(Theme.secondaryText)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
-                .background(Color.white.opacity(0.06))
-                .clipShape(RoundedRectangle(cornerRadius: 4))
-
-            if !label.isEmpty {
-                HStack(spacing: 3) {
-                    if let icon = icon {
-                        Image(systemName: icon).font(.system(size: 9))
-                    }
-                    Text(label).font(.system(size: 10, weight: .semibold))
-                }
-                .foregroundColor(color)
-            }
-        }
-        .help("Current build: \(BuildInfo.commitSHA)")
-    }
-
     private var headerSection: some View {
         VStack(spacing: 0) {
             HStack(alignment: .center, spacing: 0) {
-                // Logo + title
-                HStack(spacing: 12) {
-                    ZStack {
-                        Circle()
-                            .fill(LinearGradient(
-                                colors: [Color(hex: "2C2C2C"), Color(hex: "1A1A1A")],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ))
-                            .frame(width: 42, height: 42)
-                        Image(systemName: "internaldrive.fill")
-                            .font(.system(size: 18, weight: .medium))
-                            .foregroundStyle(LinearGradient(
-                                colors: [Color(hex: "00BFFF"), Color(hex: "C84FFF")],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ))
-                    }
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("OpenDiskTest")
-                            .font(.system(size: 16, weight: .bold, design: .rounded))
-                            .foregroundColor(Theme.primaryText)
-                        HStack(spacing: 6) {
-                            Text("macOS Disk Benchmark")
-                                .font(.system(size: 11))
-                                .foregroundColor(Theme.secondaryText)
-                            versionBadge
-                        }
-                    }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Disk Speed Test")
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .foregroundColor(Theme.primaryText)
+                    Text("Sequential & random read/write benchmark")
+                        .font(.system(size: 11))
+                        .foregroundColor(Theme.secondaryText)
                 }
 
                 Spacer()
 
-                // Appearance + secondary tools
-                HStack(spacing: 14) {
-                    Picker("", selection: $appearanceMode) {
-                        Image(systemName: "circle.lefthalf.filled").tag("system")
-                        Image(systemName: "sun.max").tag("light")
-                        Image(systemName: "moon.fill").tag("dark")
-                    }
-                    .pickerStyle(.segmented)
-                    .frame(width: 108)
-                    .help("Appearance: follow System, Light, or Dark")
-
-                    HStack(spacing: 8) {
-                        toolButton(icon: "checkmark.shield", label: "Verify",
-                                   disabled: viewModel.isRunning || viewModel.sustainedRunning || viewModel.verifying,
-                                   action: viewModel.verifyIntegrity)
-                        toolButton(icon: "waveform.path.ecg", label: "Sustained",
-                                   action: { openWindow(id: "sustained") })
-                        toolButton(icon: "clock.arrow.circlepath", label: "History",
-                                   action: { openWindow(id: "history") })
-                        toolButton(icon: "doc.text", label: "Log",
-                                   action: { openWindow(id: "log") })
-                    }
+                // Disk-specific secondary tools.
+                HStack(spacing: 8) {
+                    toolButton(icon: "checkmark.shield", label: "Verify",
+                               disabled: viewModel.isRunning || viewModel.sustainedRunning || viewModel.verifying,
+                               action: viewModel.verifyIntegrity)
+                    toolButton(icon: "waveform.path.ecg", label: "Sustained",
+                               action: { openWindow(id: "sustained") })
+                    toolButton(icon: "clock.arrow.circlepath", label: "History",
+                               action: { openWindow(id: "history") })
+                    toolButton(icon: "doc.text", label: "Log",
+                               action: { openWindow(id: "log") })
                 }
             }
             .padding(.horizontal, 24)

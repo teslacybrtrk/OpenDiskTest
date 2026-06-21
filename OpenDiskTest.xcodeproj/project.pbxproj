@@ -9,10 +9,17 @@
 /* Begin PBXBuildFile section */
 		165F4A503654D4D658496092 /* DiskSpeedTestViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E397EFF83B61C190F176718 /* DiskSpeedTestViewModel.swift */; };
 		17B311E3201E7708366CA969 /* DiskSpeedDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75127E4BF870A73A4479E704 /* DiskSpeedDetailView.swift */; };
+		1AF611E026DEEB5E77E761CC /* UpdateUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = B16F1E9CAB86BADDB15A3A82 /* UpdateUI.swift */; };
+		6ED7563DF3364AB35D8BC6DA /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6CE45F3A1B1A576C637DD2 /* DashboardView.swift */; };
 		71398B82E70D36050E333C65 /* Color+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BFB34F648ECF870EC351BBC /* Color+Hex.swift */; };
+		74A2E1C50D2832291AE85538 /* ToolDetailHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B3A7BDD7592FF1FAFB35FA4 /* ToolDetailHost.swift */; };
 		7AFB5EF8712829B3DB203430 /* OpenDiskTestApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD1FF190C1EA278DF8453509 /* OpenDiskTestApp.swift */; };
+		83113CE36D7C931CB46FFB6B /* ToolKind.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDBEB48BEF290063A1150BE8 /* ToolKind.swift */; };
+		9078F19C2D2C19860E356FCE /* SystemSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = A325A5151A1D449F2EFE63D9 /* SystemSnapshot.swift */; };
 		AA00000200000000AABBCC02 /* BuildInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000400000000AABBCC04 /* BuildInfo.swift */; };
 		BDF4AC5DB17694376100C675 /* UpdateChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0FE769877FE67ABD629E294 /* UpdateChecker.swift */; };
+		DB6DFF4C5C8C1867BA992504 /* SuiteCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFB6B717229EAA536778A5F1 /* SuiteCard.swift */; };
+		F861DD2EA52DC97EAB1805D6 /* SuiteModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75D0FCE8A83344670CF2A354 /* SuiteModel.swift */; };
 		FC16EB2EA947044E843E3BA4 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA3F492F123CC08F94BBB972 /* Theme.swift */; };
 		FE1F6DE72C8FBF0300848175 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FE1F6DE62C8FBF0300848175 /* Assets.xcassets */; };
 		FE1F6DEA2C8FBF0300848175 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FE1F6DE92C8FBF0300848175 /* Preview Assets.xcassets */; };
@@ -39,10 +46,17 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0B3A7BDD7592FF1FAFB35FA4 /* ToolDetailHost.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ToolDetailHost.swift; sourceTree = "<group>"; };
 		0BFB34F648ECF870EC351BBC /* Color+Hex.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
 		2E397EFF83B61C190F176718 /* DiskSpeedTestViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DiskSpeedTestViewModel.swift; sourceTree = "<group>"; };
 		75127E4BF870A73A4479E704 /* DiskSpeedDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DiskSpeedDetailView.swift; sourceTree = "<group>"; };
+		75D0FCE8A83344670CF2A354 /* SuiteModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SuiteModel.swift; sourceTree = "<group>"; };
+		A325A5151A1D449F2EFE63D9 /* SystemSnapshot.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SystemSnapshot.swift; sourceTree = "<group>"; };
 		AA00000400000000AABBCC04 /* BuildInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildInfo.swift; sourceTree = "<group>"; };
+		AF6CE45F3A1B1A576C637DD2 /* DashboardView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		AFB6B717229EAA536778A5F1 /* SuiteCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SuiteCard.swift; sourceTree = "<group>"; };
+		B16F1E9CAB86BADDB15A3A82 /* UpdateUI.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UpdateUI.swift; sourceTree = "<group>"; };
+		BDBEB48BEF290063A1150BE8 /* ToolKind.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ToolKind.swift; sourceTree = "<group>"; };
 		CA3F492F123CC08F94BBB972 /* Theme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		CD1FF190C1EA278DF8453509 /* OpenDiskTestApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OpenDiskTestApp.swift; sourceTree = "<group>"; };
 		E0FE769877FE67ABD629E294 /* UpdateChecker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UpdateChecker.swift; sourceTree = "<group>"; };
@@ -83,6 +97,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		1914B1B7AE0562944670210C /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				2B293526B0A52AC1DB2D4CEA /* Sensors */,
+			);
+			name = Shared;
+			path = Shared;
+			sourceTree = "<group>";
+		};
 		2489C2D18B91FD43115697B1 /* DiskSpeed */ = {
 			isa = PBXGroup;
 			children = (
@@ -93,12 +116,32 @@
 			path = DiskSpeed;
 			sourceTree = "<group>";
 		};
+		2B293526B0A52AC1DB2D4CEA /* Sensors */ = {
+			isa = PBXGroup;
+			children = (
+				A325A5151A1D449F2EFE63D9 /* SystemSnapshot.swift */,
+			);
+			name = Sensors;
+			path = Sensors;
+			sourceTree = "<group>";
+		};
+		2BFB950DFA7B2B8CFA06C00E /* DesignSystem */ = {
+			isa = PBXGroup;
+			children = (
+				AFB6B717229EAA536778A5F1 /* SuiteCard.swift */,
+				B16F1E9CAB86BADDB15A3A82 /* UpdateUI.swift */,
+			);
+			name = DesignSystem;
+			path = DesignSystem;
+			sourceTree = "<group>";
+		};
 		318507FFB93D43B61C2318EB /* Core */ = {
 			isa = PBXGroup;
 			children = (
 				0BFB34F648ECF870EC351BBC /* Color+Hex.swift */,
 				CA3F492F123CC08F94BBB972 /* Theme.swift */,
 				E0FE769877FE67ABD629E294 /* UpdateChecker.swift */,
+				2BFB950DFA7B2B8CFA06C00E /* DesignSystem */,
 			);
 			name = Core;
 			path = Core;
@@ -108,6 +151,9 @@
 			isa = PBXGroup;
 			children = (
 				CD1FF190C1EA278DF8453509 /* OpenDiskTestApp.swift */,
+				75D0FCE8A83344670CF2A354 /* SuiteModel.swift */,
+				AF6CE45F3A1B1A576C637DD2 /* DashboardView.swift */,
+				0B3A7BDD7592FF1FAFB35FA4 /* ToolDetailHost.swift */,
 			);
 			name = App;
 			path = App;
@@ -117,6 +163,7 @@
 			isa = PBXGroup;
 			children = (
 				2489C2D18B91FD43115697B1 /* DiskSpeed */,
+				BDBEB48BEF290063A1150BE8 /* ToolKind.swift */,
 			);
 			name = Tools;
 			path = Tools;
@@ -153,6 +200,7 @@
 				318507FFB93D43B61C2318EB /* Core */,
 				5184105F838D5354101FA8CF /* App */,
 				E29CF67E1738E6493ECF7FA3 /* Tools */,
+				1914B1B7AE0562944670210C /* Shared */,
 			);
 			path = OpenDiskTest;
 			sourceTree = "<group>";
@@ -342,6 +390,13 @@
 				7AFB5EF8712829B3DB203430 /* OpenDiskTestApp.swift in Sources */,
 				17B311E3201E7708366CA969 /* DiskSpeedDetailView.swift in Sources */,
 				165F4A503654D4D658496092 /* DiskSpeedTestViewModel.swift in Sources */,
+				83113CE36D7C931CB46FFB6B /* ToolKind.swift in Sources */,
+				F861DD2EA52DC97EAB1805D6 /* SuiteModel.swift in Sources */,
+				6ED7563DF3364AB35D8BC6DA /* DashboardView.swift in Sources */,
+				74A2E1C50D2832291AE85538 /* ToolDetailHost.swift in Sources */,
+				DB6DFF4C5C8C1867BA992504 /* SuiteCard.swift in Sources */,
+				1AF611E026DEEB5E77E761CC /* UpdateUI.swift in Sources */,
+				9078F19C2D2C19860E356FCE /* SystemSnapshot.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
