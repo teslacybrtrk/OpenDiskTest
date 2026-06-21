@@ -23,9 +23,11 @@
 		83113CE36D7C931CB46FFB6B /* ToolKind.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDBEB48BEF290063A1150BE8 /* ToolKind.swift */; };
 		9078F19C2D2C19860E356FCE /* SystemSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = A325A5151A1D449F2EFE63D9 /* SystemSnapshot.swift */; };
 		922D186A1289B0FC4081B99D /* NetworkTestViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C676B4CB2365F9B8162C87 /* NetworkTestViewModel.swift */; };
+		A28685A918669A372C39916D /* DuplicateFinderViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25D510880AF41348D20978D4 /* DuplicateFinderViewModel.swift */; };
 		AA00000200000000AABBCC02 /* BuildInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000400000000AABBCC04 /* BuildInfo.swift */; };
 		B10ECAF9A36B446627F7542F /* ScanNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CF80F5D2998CFE2447F23D6 /* ScanNode.swift */; };
 		BDF4AC5DB17694376100C675 /* UpdateChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0FE769877FE67ABD629E294 /* UpdateChecker.swift */; };
+		D3EF4B73B4DCB689264A98F7 /* DuplicateFinderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3800D8E986F72129B4A892E3 /* DuplicateFinderView.swift */; };
 		D58E77F95FFF07844742BF99 /* SpaceAnalyzerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B8304EFA228CD3E63E9F05A /* SpaceAnalyzerViewModel.swift */; };
 		DB6DFF4C5C8C1867BA992504 /* SuiteCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFB6B717229EAA536778A5F1 /* SuiteCard.swift */; };
 		ED01686E44DC646A48C42CB2 /* NetworkTestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F138390EECBCB4E709F1963 /* NetworkTestView.swift */; };
@@ -60,7 +62,9 @@
 		0B3A7BDD7592FF1FAFB35FA4 /* ToolDetailHost.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ToolDetailHost.swift; sourceTree = "<group>"; };
 		0BFB34F648ECF870EC351BBC /* Color+Hex.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
 		18C676B4CB2365F9B8162C87 /* NetworkTestViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NetworkTestViewModel.swift; sourceTree = "<group>"; };
+		25D510880AF41348D20978D4 /* DuplicateFinderViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DuplicateFinderViewModel.swift; sourceTree = "<group>"; };
 		2E397EFF83B61C190F176718 /* DiskSpeedTestViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DiskSpeedTestViewModel.swift; sourceTree = "<group>"; };
+		3800D8E986F72129B4A892E3 /* DuplicateFinderView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DuplicateFinderView.swift; sourceTree = "<group>"; };
 		3CF80F5D2998CFE2447F23D6 /* ScanNode.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ScanNode.swift; sourceTree = "<group>"; };
 		4CC7F7FCFD34A3EF0AB8D56F /* Treemap.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Treemap.swift; sourceTree = "<group>"; };
 		5345B9F12280DF31E91A6C20 /* SystemMonitorViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SystemMonitorViewModel.swift; sourceTree = "<group>"; };
@@ -215,6 +219,16 @@
 			path = SpaceAnalyzer;
 			sourceTree = "<group>";
 		};
+		DE674407A3F386952483CAA7 /* DuplicateFinder */ = {
+			isa = PBXGroup;
+			children = (
+				25D510880AF41348D20978D4 /* DuplicateFinderViewModel.swift */,
+				3800D8E986F72129B4A892E3 /* DuplicateFinderView.swift */,
+			);
+			name = DuplicateFinder;
+			path = DuplicateFinder;
+			sourceTree = "<group>";
+		};
 		E29CF67E1738E6493ECF7FA3 /* Tools */ = {
 			isa = PBXGroup;
 			children = (
@@ -223,6 +237,7 @@
 				3AAFAFC149CC452E8161A4A5 /* SystemMonitor */,
 				23CAC8CAE3E7806EB43A1D32 /* NetworkTest */,
 				C45A6B027EC9AB9A50EAEE2E /* SpaceAnalyzer */,
+				DE674407A3F386952483CAA7 /* DuplicateFinder */,
 			);
 			name = Tools;
 			path = Tools;
@@ -477,6 +492,8 @@
 				6BAAC259BA298C97D08DF06E /* Treemap.swift in Sources */,
 				D58E77F95FFF07844742BF99 /* SpaceAnalyzerViewModel.swift in Sources */,
 				3A0D9DBF60FF7A3A15C227D1 /* SpaceAnalyzerView.swift in Sources */,
+				A28685A918669A372C39916D /* DuplicateFinderViewModel.swift in Sources */,
+				D3EF4B73B4DCB689264A98F7 /* DuplicateFinderView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

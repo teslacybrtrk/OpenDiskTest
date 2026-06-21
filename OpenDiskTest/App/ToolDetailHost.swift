@@ -21,6 +21,8 @@ struct ToolDetailHost: View {
                 NetworkTestView()
             case .spaceAnalyzer:
                 SpaceAnalyzerView()
+            case .duplicateFinder:
+                DuplicateFinderView()
             default:
                 ToolPlaceholderView(descriptor: kind.descriptor)
             }
