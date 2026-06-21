@@ -315,6 +315,13 @@ struct ContentView: View {
                             )
                         }
                         ControlButton(
+                            icon: "waveform.path.ecg",
+                            label: "Sustained",
+                            color: Color(hex: "2C2C2C"),
+                            disabled: false,
+                            action: { openWindow(id: "sustained") }
+                        )
+                        ControlButton(
                             icon: "clock.arrow.circlepath",
                             label: "History",
                             color: Color(hex: "2C2C2C"),
@@ -865,6 +872,117 @@ private struct HistoryRow: View {
         .background(Theme.card)
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.border, lineWidth: 1))
+    }
+}
+
+// MARK: - Sustained write
+
+struct SustainedView: View {
+    @ObservedObject var viewModel: DiskSpeedTestViewModel
+
+    private var accent: Color { Color(hex: "00BFFF") }
+
+    private var yMax: Double {
+        (viewModel.sustainedSamples.map { $0.mbps }.max() ?? 100) * 1.15
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Controls
+            HStack(spacing: 12) {
+                Image(systemName: "waveform.path.ecg")
+                    .font(.system(size: 12))
+                    .foregroundColor(Theme.secondaryText)
+                Text("Sustained Write")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(Theme.secondaryText)
+
+                Spacer()
+
+                Picker("", selection: $viewModel.sustainedDuration) {
+                    ForEach(DiskSpeedTestViewModel.sustainedDurationOptions, id: \.self) { s in
+                        Text("\(s)s").tag(s)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 180)
+                .disabled(viewModel.sustainedRunning)
+
+                if viewModel.sustainedRunning {
+                    ControlButton(icon: "stop.fill", label: "Stop", color: Color(hex: "E53935"),
+                                  disabled: false, action: viewModel.stopSustainedWrite)
+                } else {
+                    ControlButton(icon: "play.fill", label: "Start", color: Color(hex: "00C9A7"),
+                                  disabled: viewModel.isRunning, action: viewModel.startSustainedWrite)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+
+            Divider().background(Theme.border)
+
+            // Chart
+            if viewModel.sustainedSamples.isEmpty {
+                VStack(spacing: 10) {
+                    Image(systemName: "chart.xyaxis.line")
+                        .font(.system(size: 36))
+                        .foregroundColor(Color(hex: "2C2C2C"))
+                    Text("Run a sustained write to chart throughput over time")
+                        .font(.system(size: 12))
+                        .foregroundColor(Color(hex: "555555"))
+                    Text("Reveals the SLC-cache cliff and thermal throttling")
+                        .font(.system(size: 10))
+                        .foregroundColor(Color(hex: "3A3A3A"))
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                Chart(viewModel.sustainedSamples) { sample in
+                    AreaMark(x: .value("Time", sample.elapsed),
+                             y: .value("MB/s", sample.mbps))
+                        .foregroundStyle(LinearGradient(
+                            colors: [accent.opacity(0.25), accent.opacity(0.02)],
+                            startPoint: .top, endPoint: .bottom))
+                    LineMark(x: .value("Time", sample.elapsed),
+                             y: .value("MB/s", sample.mbps))
+                        .foregroundStyle(accent)
+                        .interpolationMethod(.monotone)
+                }
+                .chartYScale(domain: 0...max(1, yMax))
+                .chartXAxis {
+                    AxisMarks { _ in
+                        AxisGridLine().foregroundStyle(Color(hex: "202020"))
+                        AxisValueLabel().foregroundStyle(Theme.secondaryText).font(.system(size: 9))
+                    }
+                }
+                .chartYAxis {
+                    AxisMarks(position: .leading) { _ in
+                        AxisGridLine().foregroundStyle(Color(hex: "202020"))
+                        AxisValueLabel().foregroundStyle(Theme.secondaryText).font(.system(size: 9))
+                    }
+                }
+                .padding(16)
+            }
+
+            Divider().background(Theme.border)
+
+            // Status
+            HStack {
+                Text(viewModel.sustainedStatus.isEmpty ? "Idle" : viewModel.sustainedStatus)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(viewModel.sustainedStatus.localizedCaseInsensitiveContains("throttl")
+                                     ? Color(hex: "D29922") : Theme.secondaryText)
+                Spacer()
+                if let last = viewModel.sustainedSamples.last {
+                    Text(String(format: "%.0f MB/s @ %.0fs", last.mbps, last.elapsed))
+                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                        .foregroundColor(Theme.primaryText)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+        }
+        .background(Theme.background)
+        .frame(minWidth: 520, minHeight: 320)
     }
 }
 
