@@ -1,8 +1,18 @@
 import Foundation
 import SwiftUI
 
+enum UpdateCheckStatus {
+    case idle
+    case checking
+    case upToDate
+    case updateAvailable
+    case failed
+}
+
 @MainActor
 class UpdateChecker: ObservableObject {
+    /// Current state of the latest update check, surfaced as a header badge.
+    @Published var checkStatus: UpdateCheckStatus = .idle
     @Published var updateAvailable = false
     @Published var isDownloading = false
     @Published var downloadProgress: Double = 0
@@ -25,8 +35,13 @@ class UpdateChecker: ObservableObject {
         }
     }
 
+    private func setStatus(_ status: UpdateCheckStatus) {
+        DispatchQueue.main.async { [weak self] in self?.checkStatus = status }
+    }
+
     func checkForUpdate() {
         log("Checking for updates…")
+        setStatus(.checking)
         // Use the standard latest-release endpoint (works regardless of tag name "latest")
         let url = URL(string: "https://api.github.com/repos/\(repo)/releases/latest")!
         var request = URLRequest(url: url)
@@ -36,27 +51,32 @@ class UpdateChecker: ObservableObject {
             guard let self = self else { return }
 
             if let error = error {
+                self.setStatus(.failed)
                 self.log("Check failed: \(error.localizedDescription)")
                 return
             }
             if let http = response as? HTTPURLResponse, http.statusCode != 200 {
+                self.setStatus(.failed)
                 self.log("Check failed: GitHub returned HTTP \(http.statusCode)")
                 return
             }
             guard let data = data,
                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                self.setStatus(.failed)
                 self.log("Check failed: could not parse GitHub response")
                 return
             }
 
             // Extract SHA from release title like "Latest Build (abc1234)"
             guard let title = json["name"] as? String else {
+                self.setStatus(.failed)
                 self.log("Check failed: release has no title")
                 return
             }
             guard let regex = try? NSRegularExpression(pattern: "\\(([0-9a-f]{7,})\\)"),
                   let match = regex.firstMatch(in: title, range: NSRange(title.startIndex..., in: title)),
                   let shaRange = Range(match.range(at: 1), in: title) else {
+                self.setStatus(.failed)
                 self.log("Check failed: no commit SHA found in release title \"\(title)\"")
                 return
             }
@@ -81,10 +101,12 @@ class UpdateChecker: ObservableObject {
 
             DispatchQueue.main.async {
                 guard isNew else {
+                    self.checkStatus = .upToDate
                     self.log("Up to date (\(localSHA.prefix(7)))")
                     return
                 }
                 guard let url = zipURL else {
+                    self.checkStatus = .failed
                     self.log("New version \"\(title)\" available, but no .zip asset was attached")
                     return
                 }
@@ -92,6 +114,7 @@ class UpdateChecker: ObservableObject {
                 self.latestVersionName = title
                 self.releaseNotes = notes
                 self.updateAvailable = true
+                self.checkStatus = .updateAvailable
                 self.log("New version available: \(title)")
             }
         }.resume()

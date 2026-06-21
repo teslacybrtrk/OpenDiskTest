@@ -145,6 +145,44 @@ struct ContentView: View {
 
     // MARK: Header
 
+    // MARK: Version Badge
+
+    /// Shows the running build (short commit SHA) plus the latest update-check status.
+    /// After a self-update + relaunch, the SHA visibly changes — a quick confirmation
+    /// that the update was applied.
+    private var versionBadge: some View {
+        let (label, color, icon): (String, Color, String?) = {
+            switch updateChecker.checkStatus {
+            case .idle:            return ("", Theme.secondaryText, nil)
+            case .checking:        return ("Checking…", Theme.secondaryText, nil)
+            case .upToDate:        return ("Up to date", Color(hex: "3FB950"), "checkmark.circle.fill")
+            case .updateAvailable: return ("Update available", Color(hex: "D29922"), "arrow.down.circle.fill")
+            case .failed:          return ("Check failed", Color(hex: "F85149"), "exclamationmark.triangle.fill")
+            }
+        }()
+
+        return HStack(spacing: 6) {
+            Text("build \(String(BuildInfo.commitSHA.prefix(7)))")
+                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                .foregroundColor(Theme.secondaryText)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(Color.white.opacity(0.06))
+                .clipShape(RoundedRectangle(cornerRadius: 4))
+
+            if !label.isEmpty {
+                HStack(spacing: 3) {
+                    if let icon = icon {
+                        Image(systemName: icon).font(.system(size: 9))
+                    }
+                    Text(label).font(.system(size: 10, weight: .semibold))
+                }
+                .foregroundColor(color)
+            }
+        }
+        .help("Current build: \(BuildInfo.commitSHA)")
+    }
+
     private var headerSection: some View {
         VStack(spacing: 0) {
             HStack(alignment: .center, spacing: 0) {
@@ -170,9 +208,12 @@ struct ContentView: View {
                         Text("OpenDiskTest")
                             .font(.system(size: 16, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
-                        Text("macOS Disk Benchmark")
-                            .font(.system(size: 11))
-                            .foregroundColor(Theme.secondaryText)
+                        HStack(spacing: 6) {
+                            Text("macOS Disk Benchmark")
+                                .font(.system(size: 11))
+                                .foregroundColor(Theme.secondaryText)
+                            versionBadge
+                        }
                     }
                 }
 
