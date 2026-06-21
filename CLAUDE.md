@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 OpenDiskTest is a macOS native desktop application (SwiftUI, macOS 14.5+) that benchmarks disk performance through sequential and random read/write operations, visualizing results with charts.
 
+Beyond the core benchmark it offers: cache-bypass (`F_NOCACHE`) for true device speed, a configurable I/O block size (4K/64K/1M), IOPS reporting for random tests, a drive info panel (model, SSD/HDD, connection, filesystem, capacity), one-click presets, a persisted run history, PNG/clipboard export of results, a background-completion notification, a light/dark/system appearance toggle, and a one-click in-app self-updater.
+
 ## Build & Run
 
 This is an Xcode project — open it in Xcode or use `xcodebuild`:
@@ -39,7 +41,7 @@ The GitHub Actions workflow now triggers on both `push` to main (full release) *
 xcodebuild -project OpenDiskTest.xcodeproj -scheme OpenDiskTest test
 
 # Run a single test method
-xcodebuild -project OpenDiskTest.xcodeproj -scheme OpenDiskTest test -only-testing:OpenDiskTestTests/OpenDiskTestTests/testExample
+xcodebuild -project OpenDiskTest.xcodeproj -scheme OpenDiskTest test -only-testing:OpenDiskTestTests/OpenDiskTestTests/testTestResultComputesMinAvgMaxAndSorted
 ```
 
 No linting tools are configured in this project.
@@ -50,17 +52,27 @@ No linting tools are configured in this project.
 
 **Core files:**
 
-1. `OpenDiskTestApp.swift` — `@main` entry point; creates `DiskSpeedTestViewModel` as a `@StateObject` and injects it into `ContentView`. Also wires `UpdateChecker` and the "Activity Log" window + menu command.
+1. `OpenDiskTestApp.swift` — `@main` entry point; creates `DiskSpeedTestViewModel` as a `@StateObject` and injects it into `ContentView`. Also wires `UpdateChecker` and registers two auxiliary `Window` scenes: "Activity Log" (id `log`) and "Benchmark History" (id `history`), opened via toolbar buttons / `openWindow`.
 
-2. `DiskSpeedTestViewModel.swift` — All business logic + persistence. `ObservableObject` with `@Published` for `fileSize`, `iterations`, `isRunning`, `results`, `logs`, `testDirectory` (URL?, nil = temp dir). Disk I/O on background `DispatchQueue.global(qos: .userInitiated)`. Test file lives in either NSTemporaryDirectory or a user-chosen (bookmarked) directory. `TestResult` computes min/avg/max + maintains sortedSpeeds for the chart. Settings persisted via UserDefaults (size, iterations, bookmark data). `canStartTests` + guard for validation. Stop checks inside random I/O loops.
+2. `DiskSpeedTestViewModel.swift` — All business logic + persistence. `ObservableObject` with `@Published` for `fileSize`, `iterations`, `blockSizeKB`, `bypassCache`, `isRunning`, `results`, `logs`, `testDirectory` (URL?, nil = temp dir), `driveInfo`, and `history`. Disk I/O on background `DispatchQueue.global(qos: .userInitiated)`. Test file lives in either NSTemporaryDirectory or a user-chosen (bookmarked) directory. Also defines the value types `Measurement`, `TestResult` (min/avg/max + `iopsSamples`/`avgIOPS` + sortedSpeeds), `DriveInfo`, `BenchmarkPreset`, and `BenchmarkRun`. Settings persisted via UserDefaults (size, iterations, block size, cache flag, bookmark data, history JSON). `canStartTests` + guard for validation. Stop checks inside the I/O loops. (See **Benchmark engine**, **Drive info**, **Presets & history** below.)
 
-3. `ContentView.swift` — View layer + many small subviews (`TestCard`, `SpeedDistributionChart`, `IntegratedLogView`, `InputField`, `ControlButton`, `StatCell`). Location picker uses SwiftUI `.fileImporter` + folder button + reset. Run button is disabled for invalid params. Dark theme + per-test accent colors. The update banner shows the available release name + an "Update & Relaunch" button (notes in tooltip), with live download/install status driven by `UpdateChecker`.
+3. `ContentView.swift` — View layer + many small subviews (`TestCard`, `LiveBadge`, `SpeedDistributionChart`, `HistoryView`/`HistoryRow`, `LogWindowView`, `IntegratedLogView`, `InputField`, `ControlButton`, `StatCell`). Header carries the version/update badge, an options row (block-size picker, cache-bypass toggle, appearance picker, presets), and a drive info bar. Results header has **Copy Results** (clipboard) and **Export PNG** (`ImageRenderer` → Downloads) buttons. Location picker uses SwiftUI `.fileImporter`. The `Theme` enum exposes appearance-aware **dynamic** neutral colors (`background`/`card`/`cardInner`/`border`/`secondaryText`/`primaryText`) plus fixed per-test accent colors. The update banner shows the available release name + "Update & Relaunch" (notes in tooltip), with live download/install status driven by `UpdateChecker`.
 
 4. `UpdateChecker.swift` — `@MainActor ObservableObject` that drives the in-app updater (see **Updates** below). Compares the build-time `BuildInfo.commitSHA` against the SHA parsed from the `latest` GitHub release title, downloads + installs in place, and routes events into the Activity Log via an injected `logHandler` closure (wired in `OpenDiskTestApp`).
 
 **Threading model:** All disk I/O on `DispatchQueue.global(qos: .userInitiated)`; UI updates + @Published via `DispatchQueue.main.async`. Stop flag checked between iterations (and inside random chunk loops for better responsiveness).
 
 **Persistence & Directory selection:** UserDefaults for scalars + `bookmarkData(options: .withSecurityScope)` for custom test dirs (robust even if app is later sandboxed). Security-scoped resource access is started/stopped appropriately.
+
+**Benchmark engine:** The four operations (sequential/random × read/write) run on `FileHandle`. When `bypassCache` is on (default), `fcntl(fd, F_NOCACHE, 1)` disables the OS cache so results reflect the device, not RAM, and writes are `fsync`'d. `blockSizeBytes` (from `blockSizeKB` ∈ {4, 64, 1024}) is the streaming chunk for sequential and the unit for random; random offsets are **block-aligned** for correct `F_NOCACHE` behavior. Each operation returns a `Measurement` (MB/s + optional IOPS); random tests populate `iopsSamples`/`avgIOPS`. A run is appended to `history` only on **natural completion** (a user Stop is not recorded).
+
+**Drive info:** `DriveInfo.load(for:)` runs off-main and gathers volume name/capacity/free (`URLResourceValues`), filesystem + BSD device (`statfs`), connection + model (**DiskArbitration** `DADiskCopyDescription`), and SSD-vs-HDD (**IOKit** "Medium Type"). `IOKit`/`DiskArbitration` auto-link via `import`. Refreshed on launch and whenever the test location changes.
+
+**Presets & history:** `BenchmarkPreset.all` (Quick/Default/Thorough/4K IOPS) sets size/iterations/block in one tap. Completed runs are encoded to JSON in UserDefaults (last 50) and shown in the History window.
+
+**Appearance:** `@AppStorage("appearanceMode")` (system/light/dark) drives the whole app via `NSApp.appearance`; `Theme`'s neutral colors are dynamic `NSColor`s that resolve to the effective appearance, so call sites need no changes. Text on fixed colored surfaces (gradient buttons, update banner, control buttons) stays literal white.
+
+**Notifications:** On background completion the VM posts a local `UNUserNotification` (authorization requested at launch). No special entitlement needed since the app is not sandboxed.
 
 **Sandbox & Security:** The app is **not sandboxed** (ENABLE_APP_SANDBOX = NO). This enables flexible test directory selection (any user-writable volume or folder) without extra entitlements or powerbox prompts. Only outgoing network access (`com.apple.security.network.client`) is declared for the GitHub update checker. All I/O goes to either the system temp dir or an explicitly user-chosen directory.
 
