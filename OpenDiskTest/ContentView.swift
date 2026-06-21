@@ -310,11 +310,85 @@ struct ContentView: View {
 
             optionsRow
 
+            driveInfoBar
+
             // Progress bar (visible once any test has started)
             if viewModel.isRunning || viewModel.currentIteration > 0 {
                 progressBar
             }
         }
+    }
+
+    @ViewBuilder
+    private var driveInfoBar: some View {
+        if let info = viewModel.driveInfo {
+            HStack(spacing: 10) {
+                Image(systemName: info.isSolidState == false ? "externaldrive.fill" : "internaldrive.fill")
+                    .font(.system(size: 13))
+                    .foregroundStyle(LinearGradient(
+                        colors: [Color(hex: "00BFFF"), Color(hex: "C84FFF")],
+                        startPoint: .leading, endPoint: .trailing))
+
+                Text(info.volumeName)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+
+                ForEach(driveTags(info), id: \.self) { tag in
+                    Text(tag)
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundColor(Theme.secondaryText)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.white.opacity(0.06))
+                        .clipShape(RoundedRectangle(cornerRadius: 4))
+                }
+
+                if let model = info.mediaName {
+                    Text(model)
+                        .font(.system(size: 10))
+                        .foregroundColor(Theme.secondaryText)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+
+                Spacer()
+
+                // Capacity
+                if info.totalBytes > 0 {
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(Color.white.opacity(0.08))
+                            Capsule()
+                                .fill(LinearGradient(
+                                    colors: [Color(hex: "00BFFF"), Color(hex: "C84FFF")],
+                                    startPoint: .leading, endPoint: .trailing))
+                                .frame(width: max(2, geo.size.width * info.usedFraction))
+                        }
+                    }
+                    .frame(width: 90, height: 5)
+
+                    Text("\(byteString(info.freeBytes)) free of \(byteString(info.totalBytes))")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(Theme.secondaryText)
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 8)
+            .background(Theme.cardInner.opacity(0.5))
+        }
+    }
+
+    private func driveTags(_ info: DriveInfo) -> [String] {
+        var tags: [String] = []
+        if let kind = info.mediaKind { tags.append(kind) }
+        if let conn = info.connection, !conn.isEmpty { tags.append(conn) }
+        tags.append(info.fileSystem)
+        return tags
+    }
+
+    private func byteString(_ bytes: Int64) -> String {
+        ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
     }
 
     private var optionsRow: some View {
