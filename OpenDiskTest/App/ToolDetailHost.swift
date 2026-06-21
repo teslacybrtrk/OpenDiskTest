@@ -17,6 +17,8 @@ struct ToolDetailHost: View {
                 DiskSpeedDetailView(viewModel: model.diskVM)
             case .systemMonitor:
                 SystemMonitorView()
+            case .networkTest:
+                NetworkTestView()
             default:
                 ToolPlaceholderView(descriptor: kind.descriptor)
             }
