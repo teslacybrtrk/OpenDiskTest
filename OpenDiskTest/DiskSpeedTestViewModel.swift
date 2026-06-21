@@ -1,5 +1,7 @@
 import Foundation
 import Combine
+import DiskArbitration
+import IOKit
 
 class DiskSpeedTestViewModel: ObservableObject {
     @Published var fileSize: Double = 10 { // Default 10 MB
@@ -44,6 +46,9 @@ class DiskSpeedTestViewModel: ObservableObject {
     /// nil = use system temporary directory. When set, tests run in the user-chosen folder (persisted via security-scoped bookmark).
     @Published var testDirectory: URL? = nil
 
+    /// Info about the volume the tests will run on (model, SSD/HDD, connection, capacity).
+    @Published var driveInfo: DriveInfo? = nil
+
     private let fileManager = FileManager.default
     private var securityScopedResource: URL? = nil
 
@@ -60,6 +65,16 @@ class DiskSpeedTestViewModel: ObservableObject {
         }
 
         loadTestDirectoryBookmark()
+        refreshDriveInfo()
+    }
+
+    /// Loads volume/device details for the active test location off the main thread.
+    func refreshDriveInfo() {
+        let url = testDirectory ?? URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            let info = DriveInfo.load(for: url)
+            DispatchQueue.main.async { self?.driveInfo = info }
+        }
     }
 
     private func loadTestDirectoryBookmark() {
@@ -177,6 +192,7 @@ class DiskSpeedTestViewModel: ObservableObject {
             }
             addLog("Test location set to: \(resolved.path)")
             resetResults()
+            refreshDriveInfo()
         } catch {
             addLog("Failed to bookmark chosen test directory: \(error)")
         }
@@ -191,6 +207,7 @@ class DiskSpeedTestViewModel: ObservableObject {
         testDirectory = nil
         addLog("Test location reset to temporary directory")
         resetResults()
+        refreshDriveInfo()
     }
 
     private func resetResults() {
@@ -383,6 +400,108 @@ class DiskSpeedTestViewModel: ObservableObject {
 struct Measurement {
     let mbps: Double
     let iops: Double?
+}
+
+/// Details about the volume/device the tests run on.
+struct DriveInfo {
+    var volumeName: String
+    var totalBytes: Int64
+    var freeBytes: Int64
+    var fileSystem: String
+    var connection: String?     // "USB", "Thunderbolt", "PCI-Express", "SATA"…
+    var mediaName: String?      // device model
+    var isSolidState: Bool?
+
+    var usedBytes: Int64 { max(0, totalBytes - freeBytes) }
+    var usedFraction: Double { totalBytes > 0 ? Double(usedBytes) / Double(totalBytes) : 0 }
+    /// "SSD" / "HDD" / nil when unknown.
+    var mediaKind: String? {
+        guard let ssd = isSolidState else { return nil }
+        return ssd ? "SSD" : "HDD"
+    }
+
+    static func load(for url: URL) -> DriveInfo {
+        let keys: Set<URLResourceKey> = [.volumeNameKey, .volumeTotalCapacityKey, .volumeAvailableCapacityKey]
+        let values = try? url.resourceValues(forKeys: keys)
+        let name = values?.volumeName ?? "Unknown Volume"
+        let total = Int64(values?.volumeTotalCapacity ?? 0)
+        let free = Int64(values?.volumeAvailableCapacity ?? 0)
+
+        // Filesystem type + BSD device name via statfs.
+        var fsType = "—"
+        var bsdName: String?
+        var fs = statfs()
+        if statfs((url as NSURL).fileSystemRepresentation, &fs) == 0 {
+            fsType = withUnsafeBytes(of: &fs.f_fstypename) { raw in
+                String(cString: raw.baseAddress!.assumingMemoryBound(to: CChar.self))
+            }
+            let mnt = withUnsafeBytes(of: &fs.f_mntfromname) { raw in
+                String(cString: raw.baseAddress!.assumingMemoryBound(to: CChar.self))
+            }
+            if mnt.hasPrefix("/dev/") { bsdName = String(mnt.dropFirst("/dev/".count)) }
+        }
+
+        var connection: String?
+        var media: String?
+        if let bsd = bsdName,
+           let session = DASessionCreate(kCFAllocatorDefault),
+           let disk = DADiskCreateFromBSDName(kCFAllocatorDefault, session, bsd),
+           let desc = DADiskCopyDescription(disk) as? [String: Any] {
+            connection = desc[kDADiskDescriptionDeviceProtocolKey as String] as? String
+            media = (desc[kDADiskDescriptionDeviceModelKey as String] as? String)?
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+
+        return DriveInfo(
+            volumeName: name,
+            totalBytes: total,
+            freeBytes: free,
+            fileSystem: prettyFileSystem(fsType),
+            connection: connection?.trimmingCharacters(in: .whitespacesAndNewlines),
+            mediaName: (media?.isEmpty == false) ? media : nil,
+            isSolidState: bsdName.flatMap { isSolidState(bsdName: $0) }
+        )
+    }
+
+    private static func prettyFileSystem(_ raw: String) -> String {
+        switch raw.lowercased() {
+        case "apfs": return "APFS"
+        case "hfs": return "HFS+"
+        case "msdos", "exfat": return raw.uppercased()
+        case "ntfs": return "NTFS"
+        case "": return "—"
+        default: return raw.uppercased()
+        }
+    }
+
+    /// Reduce a slice name ("disk3s1") to its whole disk ("disk3").
+    private static func wholeDisk(of bsd: String) -> String {
+        if let range = bsd.range(of: "^disk[0-9]+", options: .regularExpression) {
+            return String(bsd[range])
+        }
+        return bsd
+    }
+
+    /// Reads the IOKit "Medium Type" for the device to classify SSD vs HDD.
+    private static func isSolidState(bsdName: String) -> Bool? {
+        let whole = wholeDisk(of: bsdName)
+        guard let matching = IOBSDNameMatching(kIOMainPortDefault, 0, whole) else { return nil }
+        let service = IOServiceGetMatchingService(kIOMainPortDefault, matching)
+        guard service != 0 else { return nil }
+        defer { IOObjectRelease(service) }
+
+        let prop = IORegistryEntrySearchCFProperty(
+            service,
+            kIOServicePlane,
+            "Device Characteristics" as CFString,
+            kCFAllocatorDefault,
+            IOOptionBits(kIORegistryIterateRecursively | kIORegistryIterateParents)
+        )
+        if let dict = prop as? [String: Any], let medium = dict["Medium Type"] as? String {
+            return medium.lowercased().contains("solid")
+        }
+        return nil
+    }
 }
 
 struct TestResult: Identifiable {
