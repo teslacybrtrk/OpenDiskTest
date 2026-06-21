@@ -64,3 +64,6 @@ fastlane/test_output
 
 # Generated at build time
 OpenDiskTest/BuildInfo.swift
+
+# Local xcodebuild derivedDataPath
+/build/

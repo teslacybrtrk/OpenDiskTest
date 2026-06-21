@@ -7,16 +7,18 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		FE1F6DE32C8FBF0200848175 /* OpenDiskTestApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE1F6DE22C8FBF0200848175 /* OpenDiskTestApp.swift */; };
-		FE1F6DE52C8FBF0200848175 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE1F6DE42C8FBF0200848175 /* ContentView.swift */; };
+		165F4A503654D4D658496092 /* DiskSpeedTestViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E397EFF83B61C190F176718 /* DiskSpeedTestViewModel.swift */; };
+		17B311E3201E7708366CA969 /* DiskSpeedDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75127E4BF870A73A4479E704 /* DiskSpeedDetailView.swift */; };
+		71398B82E70D36050E333C65 /* Color+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BFB34F648ECF870EC351BBC /* Color+Hex.swift */; };
+		7AFB5EF8712829B3DB203430 /* OpenDiskTestApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD1FF190C1EA278DF8453509 /* OpenDiskTestApp.swift */; };
+		AA00000200000000AABBCC02 /* BuildInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000400000000AABBCC04 /* BuildInfo.swift */; };
+		BDF4AC5DB17694376100C675 /* UpdateChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0FE769877FE67ABD629E294 /* UpdateChecker.swift */; };
+		FC16EB2EA947044E843E3BA4 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA3F492F123CC08F94BBB972 /* Theme.swift */; };
 		FE1F6DE72C8FBF0300848175 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FE1F6DE62C8FBF0300848175 /* Assets.xcassets */; };
 		FE1F6DEA2C8FBF0300848175 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FE1F6DE92C8FBF0300848175 /* Preview Assets.xcassets */; };
 		FE1F6DF52C8FBF0400848175 /* OpenDiskTestTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE1F6DF42C8FBF0400848175 /* OpenDiskTestTests.swift */; };
 		FE1F6DFF2C8FBF0400848175 /* OpenDiskTestUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE1F6DFE2C8FBF0400848175 /* OpenDiskTestUITests.swift */; };
 		FE1F6E012C8FBF0400848175 /* OpenDiskTestUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE1F6E002C8FBF0400848175 /* OpenDiskTestUITestsLaunchTests.swift */; };
-		FE1F6E0E2C8FC6C300848175 /* DiskSpeedTestViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE1F6E0D2C8FC6C300848175 /* DiskSpeedTestViewModel.swift */; };
-		AA00000100000000AABBCC01 /* UpdateChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000300000000AABBCC03 /* UpdateChecker.swift */; };
-		AA00000200000000AABBCC02 /* BuildInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000400000000AABBCC04 /* BuildInfo.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -37,9 +39,14 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0BFB34F648ECF870EC351BBC /* Color+Hex.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
+		2E397EFF83B61C190F176718 /* DiskSpeedTestViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DiskSpeedTestViewModel.swift; sourceTree = "<group>"; };
+		75127E4BF870A73A4479E704 /* DiskSpeedDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DiskSpeedDetailView.swift; sourceTree = "<group>"; };
+		AA00000400000000AABBCC04 /* BuildInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildInfo.swift; sourceTree = "<group>"; };
+		CA3F492F123CC08F94BBB972 /* Theme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		CD1FF190C1EA278DF8453509 /* OpenDiskTestApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OpenDiskTestApp.swift; sourceTree = "<group>"; };
+		E0FE769877FE67ABD629E294 /* UpdateChecker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UpdateChecker.swift; sourceTree = "<group>"; };
 		FE1F6DDF2C8FBF0200848175 /* OpenDiskTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OpenDiskTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		FE1F6DE22C8FBF0200848175 /* OpenDiskTestApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenDiskTestApp.swift; sourceTree = "<group>"; };
-		FE1F6DE42C8FBF0200848175 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		FE1F6DE62C8FBF0300848175 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FE1F6DE92C8FBF0300848175 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		FE1F6DEB2C8FBF0300848175 /* OpenDiskTest.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OpenDiskTest.entitlements; sourceTree = "<group>"; };
@@ -48,10 +55,7 @@
 		FE1F6DFA2C8FBF0400848175 /* OpenDiskTestUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OpenDiskTestUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		FE1F6DFE2C8FBF0400848175 /* OpenDiskTestUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenDiskTestUITests.swift; sourceTree = "<group>"; };
 		FE1F6E002C8FBF0400848175 /* OpenDiskTestUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenDiskTestUITestsLaunchTests.swift; sourceTree = "<group>"; };
-		FE1F6E0D2C8FC6C300848175 /* DiskSpeedTestViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiskSpeedTestViewModel.swift; sourceTree = "<group>"; };
 		FEB902192C929D4300A2A134 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		AA00000300000000AABBCC03 /* UpdateChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateChecker.swift; sourceTree = "<group>"; };
-		AA00000400000000AABBCC04 /* BuildInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildInfo.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -79,6 +83,45 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		2489C2D18B91FD43115697B1 /* DiskSpeed */ = {
+			isa = PBXGroup;
+			children = (
+				75127E4BF870A73A4479E704 /* DiskSpeedDetailView.swift */,
+				2E397EFF83B61C190F176718 /* DiskSpeedTestViewModel.swift */,
+			);
+			name = DiskSpeed;
+			path = DiskSpeed;
+			sourceTree = "<group>";
+		};
+		318507FFB93D43B61C2318EB /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				0BFB34F648ECF870EC351BBC /* Color+Hex.swift */,
+				CA3F492F123CC08F94BBB972 /* Theme.swift */,
+				E0FE769877FE67ABD629E294 /* UpdateChecker.swift */,
+			);
+			name = Core;
+			path = Core;
+			sourceTree = "<group>";
+		};
+		5184105F838D5354101FA8CF /* App */ = {
+			isa = PBXGroup;
+			children = (
+				CD1FF190C1EA278DF8453509 /* OpenDiskTestApp.swift */,
+			);
+			name = App;
+			path = App;
+			sourceTree = "<group>";
+		};
+		E29CF67E1738E6493ECF7FA3 /* Tools */ = {
+			isa = PBXGroup;
+			children = (
+				2489C2D18B91FD43115697B1 /* DiskSpeed */,
+			);
+			name = Tools;
+			path = Tools;
+			sourceTree = "<group>";
+		};
 		FE1F6DD62C8FBF0200848175 = {
 			isa = PBXGroup;
 			children = (
@@ -103,14 +146,13 @@
 			isa = PBXGroup;
 			children = (
 				FEB902192C929D4300A2A134 /* Info.plist */,
-				FE1F6DE22C8FBF0200848175 /* OpenDiskTestApp.swift */,
-				FE1F6DE42C8FBF0200848175 /* ContentView.swift */,
-				FE1F6E0D2C8FC6C300848175 /* DiskSpeedTestViewModel.swift */,
-				AA00000300000000AABBCC03 /* UpdateChecker.swift */,
 				AA00000400000000AABBCC04 /* BuildInfo.swift */,
 				FE1F6DE62C8FBF0300848175 /* Assets.xcassets */,
 				FE1F6DEB2C8FBF0300848175 /* OpenDiskTest.entitlements */,
 				FE1F6DE82C8FBF0300848175 /* Preview Content */,
+				318507FFB93D43B61C2318EB /* Core */,
+				5184105F838D5354101FA8CF /* App */,
+				E29CF67E1738E6493ECF7FA3 /* Tools */,
 			);
 			path = OpenDiskTest;
 			sourceTree = "<group>";
@@ -293,11 +335,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FE1F6DE52C8FBF0200848175 /* ContentView.swift in Sources */,
-				FE1F6E0E2C8FC6C300848175 /* DiskSpeedTestViewModel.swift in Sources */,
-				FE1F6DE32C8FBF0200848175 /* OpenDiskTestApp.swift in Sources */,
-				AA00000100000000AABBCC01 /* UpdateChecker.swift in Sources */,
 				AA00000200000000AABBCC02 /* BuildInfo.swift in Sources */,
+				71398B82E70D36050E333C65 /* Color+Hex.swift in Sources */,
+				FC16EB2EA947044E843E3BA4 /* Theme.swift in Sources */,
+				BDF4AC5DB17694376100C675 /* UpdateChecker.swift in Sources */,
+				7AFB5EF8712829B3DB203430 /* OpenDiskTestApp.swift in Sources */,
+				17B311E3201E7708366CA969 /* DiskSpeedDetailView.swift in Sources */,
+				165F4A503654D4D658496092 /* DiskSpeedTestViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -7,7 +7,7 @@ struct OpenDiskTestApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView(viewModel: viewModel, updateChecker: updateChecker)
+            DiskSpeedDetailView(viewModel: viewModel, updateChecker: updateChecker)
                 .environmentObject(viewModel)
                 .onAppear {
                     // Route update events into the Activity Log so failures are diagnosable.

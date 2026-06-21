@@ -3,39 +3,13 @@ import Charts
 import UniformTypeIdentifiers
 import AppKit
 
-// MARK: - Theme
+// MARK: - Disk Speed Detail View
+//
+// The full Disk Speed Test tool. Formerly the app's root `ContentView`; now one
+// tool within the suite, hosted by the dashboard shell. `Theme` and `Color(hex:)`
+// live in Core/.
 
-enum Theme {
-    /// A color that resolves to the dark or light hex depending on the effective appearance.
-    private static func dynamic(dark: String, light: String) -> Color {
-        Color(nsColor: NSColor(name: nil) { appearance in
-            let isDark = appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
-            return NSColor(Color(hex: isDark ? dark : light))
-        })
-    }
-
-    static let background    = dynamic(dark: "0D0D0D", light: "F2F2F4")
-    static let card          = dynamic(dark: "181818", light: "FFFFFF")
-    static let cardInner     = dynamic(dark: "111111", light: "ECECEE")
-    static let border        = dynamic(dark: "2A2A2A", light: "D8D8DC")
-    static let secondaryText = dynamic(dark: "6E6E6E", light: "8A8A8E")
-    static let primaryText   = dynamic(dark: "F5F5F5", light: "1A1A1A")
-
-    static let testColors: [String: Color] = [
-        "Sequential Write": Color(hex: "FF6B35"),
-        "Sequential Read":  Color(hex: "00BFFF"),
-        "Random Write":     Color(hex: "C84FFF"),
-        "Random Read":      Color(hex: "00E676")
-    ]
-
-    static func color(for name: String) -> Color {
-        testColors[name] ?? .blue
-    }
-}
-
-// MARK: - ContentView
-
-struct ContentView: View {
+struct DiskSpeedDetailView: View {
     @ObservedObject var viewModel: DiskSpeedTestViewModel
     @ObservedObject var updateChecker: UpdateChecker
     @Environment(\.openWindow) private var openWindow
@@ -1326,28 +1300,3 @@ struct InputField: View {
     }
 }
 
-// MARK: - Color Extension
-
-extension Color {
-    init(hex: String) {
-        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var int: UInt64 = 0
-        Scanner(string: hex).scanHexInt64(&int)
-        let a, r, g, b: UInt64
-        switch hex.count {
-        case 3:
-            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6:
-            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8:
-            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
-        default:
-            (a, r, g, b) = (255, 255, 255, 255)
-        }
-        self.init(.sRGB,
-                  red:     Double(r) / 255,
-                  green:   Double(g) / 255,
-                  blue:    Double(b) / 255,
-                  opacity: Double(a) / 255)
-    }
-}
