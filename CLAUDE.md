@@ -54,10 +54,20 @@ No linting tools are configured in this project.
 
 2. `DiskSpeedTestViewModel.swift` — All business logic + persistence. `ObservableObject` with `@Published` for `fileSize`, `iterations`, `isRunning`, `results`, `logs`, `testDirectory` (URL?, nil = temp dir). Disk I/O on background `DispatchQueue.global(qos: .userInitiated)`. Test file lives in either NSTemporaryDirectory or a user-chosen (bookmarked) directory. `TestResult` computes min/avg/max + maintains sortedSpeeds for the chart. Settings persisted via UserDefaults (size, iterations, bookmark data). `canStartTests` + guard for validation. Stop checks inside random I/O loops.
 
-3. `ContentView.swift` — View layer + many small subviews (`TestCard`, `SpeedDistributionChart`, `IntegratedLogView`, `InputField`, `ControlButton`, `StatCell`). Location picker uses SwiftUI `.fileImporter` + folder button + reset. Run button is disabled for invalid params. Dark theme + per-test accent colors. Update banner safely opens the GitHub releases page (no more in-app destructive swap).
+3. `ContentView.swift` — View layer + many small subviews (`TestCard`, `SpeedDistributionChart`, `IntegratedLogView`, `InputField`, `ControlButton`, `StatCell`). Location picker uses SwiftUI `.fileImporter` + folder button + reset. Run button is disabled for invalid params. Dark theme + per-test accent colors. The update banner shows the available release name + an "Update & Relaunch" button (notes in tooltip), with live download/install status driven by `UpdateChecker`.
+
+4. `UpdateChecker.swift` — `@MainActor ObservableObject` that drives the in-app updater (see **Updates** below). Compares the build-time `BuildInfo.commitSHA` against the SHA parsed from the `latest` GitHub release title, downloads + installs in place, and routes events into the Activity Log via an injected `logHandler` closure (wired in `OpenDiskTestApp`).
 
 **Threading model:** All disk I/O on `DispatchQueue.global(qos: .userInitiated)`; UI updates + @Published via `DispatchQueue.main.async`. Stop flag checked between iterations (and inside random chunk loops for better responsiveness).
 
 **Persistence & Directory selection:** UserDefaults for scalars + `bookmarkData(options: .withSecurityScope)` for custom test dirs (robust even if app is later sandboxed). Security-scoped resource access is started/stopped appropriately.
 
 **Sandbox & Security:** The app is **not sandboxed** (ENABLE_APP_SANDBOX = NO). This enables flexible test directory selection (any user-writable volume or folder) without extra entitlements or powerbox prompts. Only outgoing network access (`com.apple.security.network.client`) is declared for the GitHub update checker. All I/O goes to either the system temp dir or an explicitly user-chosen directory.
+
+**Updates:** The app is unsigned / not notarized, but still does a true **one-click in-place self-update** (no drag, no Gatekeeper prompt). Because the app is not sandboxed and downloads + extracts the update itself, the new bundle is never quarantined (browser downloads are what normally trigger the Gatekeeper "unsafe" warning). Flow in `UpdateChecker.performUpdate()`:
+
+1. On launch (and a ⌘U "Check for Updates…" menu item), `checkForUpdate()` hits `releases/latest`, regex-parses the short SHA from the release title (`Latest Build (abc1234)`), and compares it to `BuildInfo.commitSHA`. The rolling `latest` release model means any difference = a newer build.
+2. `performUpdate()` downloads the zip, extracts via `ditto`, strips quarantine defensively (`xattr -dr com.apple.quarantine`), then — if the running bundle is in a writable location and not App-Translocated — spawns a detached `/bin/sh` helper that waits for the app to quit, swaps the bundle in place, clears quarantine, and relaunches. The app then calls `NSApp.terminate`.
+3. **Fallback:** if the bundle is read-only or App-Translocated, it reverts to the older flow — drop a ready-to-use `OpenDiskTest (new).app` in Downloads and reveal it in Finder for a manual drag.
+
+`BuildInfo.swift` (the `commitSHA`) is **generated at build time** by a Run Script phase (`git rev-parse HEAD`) and is gitignored — so SourceKit/static analysis will report `BuildInfo` as "not in scope" until a build generates it; this is expected, not a real error.
