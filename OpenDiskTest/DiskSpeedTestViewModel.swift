@@ -8,7 +8,21 @@ class DiskSpeedTestViewModel: ObservableObject {
     @Published var iterations: Int = 100 { // Default 100 iterations
         didSet { UserDefaults.standard.set(iterations, forKey: "iterations") }
     }
+    /// I/O block size in KB used for random tests (and the sequential streaming chunk).
+    /// Larger blocks favor throughput; smaller blocks stress IOPS.
+    @Published var blockSizeKB: Int = 4 {
+        didSet { UserDefaults.standard.set(blockSizeKB, forKey: "blockSizeKB") }
+    }
+    /// When true, disables the OS file cache (F_NOCACHE) so results reflect true disk
+    /// speed instead of RAM. On by default for trustworthy numbers.
+    @Published var bypassCache: Bool = true {
+        didSet { UserDefaults.standard.set(bypassCache, forKey: "bypassCache") }
+    }
     @Published var isRunning = false
+
+    /// Supported block sizes for the picker (KB).
+    static let blockSizeOptions = [4, 64, 1024]
+    private var blockSizeBytes: Int { max(1, blockSizeKB) * 1024 }
     @Published var currentIteration: Int = 0
 
     var progress: Double {
@@ -39,6 +53,11 @@ class DiskSpeedTestViewModel: ObservableObject {
         if savedSize >= 0.1 { fileSize = savedSize }
         let savedIters = UserDefaults.standard.integer(forKey: "iterations")
         if savedIters >= 1 { iterations = savedIters }
+        let savedBlock = UserDefaults.standard.integer(forKey: "blockSizeKB")
+        if Self.blockSizeOptions.contains(savedBlock) { blockSizeKB = savedBlock }
+        if UserDefaults.standard.object(forKey: "bypassCache") != nil {
+            bypassCache = UserDefaults.standard.bool(forKey: "bypassCache")
+        }
 
         loadTestDirectoryBookmark()
     }
@@ -72,7 +91,7 @@ class DiskSpeedTestViewModel: ObservableObject {
         results = results.map { TestResult(name: $0.name) }
         logs.removeAll()
         
-        addLog("Starting tests with file size: \(String(format: "%.2f", fileSize)) MB and \(iterations) iterations")
+        addLog("Starting tests — file size: \(String(format: "%.2f", fileSize)) MB, \(iterations) iterations, block \(blockSizeKB) KB, cache \(bypassCache ? "bypassed (F_NOCACHE)" : "enabled")")
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
@@ -178,13 +197,15 @@ class DiskSpeedTestViewModel: ObservableObject {
         results = results.map { TestResult(name: $0.name) }
     }
 
-    private func updateTest(index: Int, name: String, operation: () -> Double) {
-        let speed = operation()
+    private func updateTest(index: Int, name: String, operation: () -> Measurement) {
+        let m = operation()
         DispatchQueue.main.async {
-            self.results[index].speeds.append(speed)
+            self.results[index].speeds.append(m.mbps)
+            if let iops = m.iops { self.results[index].iopsSamples.append(iops) }
             self.results[index].sortedSpeeds = self.results[index].speeds.enumerated().sorted { $0.element < $1.element }
-            
-            self.addLog("\(name) - Speed: \(String(format: "%.2f", speed)) MB/s, Min: \(String(format: "%.2f", self.results[index].minSpeed)) MB/s, Avg: \(String(format: "%.2f", self.results[index].avgSpeed)) MB/s, Max: \(String(format: "%.2f", self.results[index].maxSpeed)) MB/s")
+
+            let iopsNote = m.iops.map { String(format: ", %.0f IOPS", $0) } ?? ""
+            self.addLog("\(name) - \(String(format: "%.2f", m.mbps)) MB/s\(iopsNote) (avg \(String(format: "%.2f", self.results[index].avgSpeed)) MB/s)")
         }
     }
     
@@ -204,22 +225,26 @@ class DiskSpeedTestViewModel: ObservableObject {
         Date:       \(DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .short))
         File size:  \(String(format: "%.2f", fileSize)) MB
         Iterations: \(iterations)
+        Block size: \(blockSizeKB) KB
+        Cache:      \(bypassCache ? "bypassed (F_NOCACHE)" : "enabled")
         Location:   \(location)
 
         """
-        func row(_ name: String, _ a: String, _ b: String, _ c: String) -> String {
+        func row(_ name: String, _ a: String, _ b: String, _ c: String, _ d: String) -> String {
             var line = pad(name, 18)
             line += pad(a, 11)
             line += pad(b, 11)
             line += pad(c, 11)
+            line += d
             return line
         }
-        out += row("Test", "Min", "Avg", "Max") + "(MB/s)\n"
+        out += row("Test", "Min", "Avg", "Max", "(MB/s) | IOPS") + "\n"
         for r in results where !r.speeds.isEmpty {
             let minS = String(format: "%.2f", r.minSpeed)
             let avgS = String(format: "%.2f", r.avgSpeed)
             let maxS = String(format: "%.2f", r.maxSpeed)
-            out += row(r.name, minS, avgS, maxS) + "\n"
+            let iopsS = r.isRandom ? String(format: "%.0f IOPS", r.avgIOPS) : ""
+            out += row(r.name, minS, avgS, maxS, iopsS) + "\n"
         }
         return out
     }
@@ -235,101 +260,141 @@ class DiskSpeedTestViewModel: ObservableObject {
         return baseDir.appendingPathComponent("diskspeedtest.tmp")
     }
     
-    // Disk operation methods
-    private func sequentialWrite(size: Int, to url: URL) -> Double {
-        let data = Data(count: size)
-        let start = Date()
-        
+    // MARK: - Disk operations
+
+    /// Disables the OS file cache on a handle when bypassCache is on, so measurements
+    /// reflect the device rather than RAM.
+    private func applyCachePolicy(_ handle: FileHandle) {
+        if bypassCache {
+            _ = fcntl(handle.fileDescriptor, F_NOCACHE, 1)
+        }
+    }
+
+    private func megabytesPerSecond(bytes: Int, seconds: Double) -> Double {
+        seconds > 0 ? Double(bytes) / seconds / (1024 * 1024) : 0
+    }
+
+    private func sequentialWrite(size: Int, to url: URL) -> Measurement {
+        let block = blockSizeBytes
+        let chunk = Data(count: block)
         do {
-            try data.write(to: url)
+            let handle = try FileHandle(forWritingTo: url)
+            defer { try? handle.close() }
+            applyCachePolicy(handle)
+            handle.truncateFile(atOffset: 0)
+
+            let start = Date()
+            var written = 0
+            while written < size {
+                guard isRunning else { break }
+                let remaining = size - written
+                handle.write(remaining >= block ? chunk : chunk.prefix(remaining))
+                written += min(block, remaining)
+            }
+            fsync(handle.fileDescriptor) // ensure data actually reaches the device
+            let seconds = Date().timeIntervalSince(start)
+            return Measurement(mbps: megabytesPerSecond(bytes: written, seconds: seconds), iops: nil)
         } catch {
             addLog("Error in sequential write: \(error)")
-            return 0
+            return Measurement(mbps: 0, iops: nil)
         }
-        
-        let end = Date()
-        let timeInterval = end.timeIntervalSince(start)
-        return Double(size) / timeInterval / (1024 * 1024) // MB/s
     }
-    
-    private func sequentialRead(from url: URL) -> Double {
-        let start = Date()
-        
+
+    private func sequentialRead(from url: URL) -> Measurement {
+        let block = blockSizeBytes
         do {
-            _ = try Data(contentsOf: url)
+            let handle = try FileHandle(forReadingFrom: url)
+            defer { try? handle.close() }
+            applyCachePolicy(handle)
+
+            let start = Date()
+            var total = 0
+            while isRunning {
+                let data = handle.readData(ofLength: block)
+                if data.isEmpty { break }
+                total += data.count
+            }
+            let seconds = Date().timeIntervalSince(start)
+            return Measurement(mbps: megabytesPerSecond(bytes: total, seconds: seconds), iops: nil)
         } catch {
             addLog("Error in sequential read: \(error)")
-            return 0
+            return Measurement(mbps: 0, iops: nil)
         }
-        
-        let end = Date()
-        let timeInterval = end.timeIntervalSince(start)
-        let fileSize = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
-        return Double(fileSize) / timeInterval / (1024 * 1024) // MB/s
     }
-    
-    private func randomWrite(size: Int, to url: URL) -> Double {
-        let chunkSize = 4096 // 4 KB chunks
-        let chunks = size / chunkSize
-        let data = Data(count: chunkSize)
-        let start = Date()
-        
+
+    private func randomWrite(size: Int, to url: URL) -> Measurement {
+        let block = blockSizeBytes
+        let blockCount = max(1, size / block)
+        let data = Data(count: block)
         do {
-            let fileHandle = try FileHandle(forWritingTo: url)
-            defer { fileHandle.closeFile() }
-            
-            for _ in 0..<chunks {
+            let handle = try FileHandle(forWritingTo: url)
+            defer { try? handle.close() }
+            applyCachePolicy(handle)
+
+            var ops = 0
+            let start = Date()
+            for _ in 0..<blockCount {
                 guard isRunning else { break }
-                let offset = UInt64(arc4random_uniform(UInt32(size)))
-                fileHandle.seek(toFileOffset: offset)
-                fileHandle.write(data)
+                // Block-aligned random offset (required for good F_NOCACHE behavior).
+                let offset = UInt64(Int.random(in: 0..<blockCount) * block)
+                handle.seek(toFileOffset: offset)
+                handle.write(data)
+                ops += 1
             }
+            fsync(handle.fileDescriptor)
+            let seconds = Date().timeIntervalSince(start)
+            return Measurement(mbps: megabytesPerSecond(bytes: ops * block, seconds: seconds),
+                               iops: seconds > 0 ? Double(ops) / seconds : 0)
         } catch {
             addLog("Error in random write: \(error)")
-            return 0
+            return Measurement(mbps: 0, iops: 0)
         }
-        
-        let end = Date()
-        let timeInterval = end.timeIntervalSince(start)
-        return Double(size) / timeInterval / (1024 * 1024) // MB/s
     }
-    
-    private func randomRead(from url: URL) -> Double {
-        let chunkSize = 4096 // 4 KB chunks
-        let start = Date()
-        
+
+    private func randomRead(from url: URL) -> Measurement {
+        let block = blockSizeBytes
+        let fileSize = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+        let blockCount = max(1, fileSize / block)
         do {
-            let fileHandle = try FileHandle(forReadingFrom: url)
-            defer { fileHandle.closeFile() }
-            
-            let fileSize = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
-            let chunks = fileSize / chunkSize
-            
-            for _ in 0..<chunks {
+            let handle = try FileHandle(forReadingFrom: url)
+            defer { try? handle.close() }
+            applyCachePolicy(handle)
+
+            var ops = 0
+            let start = Date()
+            for _ in 0..<blockCount {
                 guard isRunning else { break }
-                let offset = UInt64(arc4random_uniform(UInt32(fileSize)))
-                fileHandle.seek(toFileOffset: offset)
-                _ = fileHandle.readData(ofLength: chunkSize)
+                let offset = UInt64(Int.random(in: 0..<blockCount) * block)
+                handle.seek(toFileOffset: offset)
+                _ = handle.readData(ofLength: block)
+                ops += 1
             }
+            let seconds = Date().timeIntervalSince(start)
+            return Measurement(mbps: megabytesPerSecond(bytes: ops * block, seconds: seconds),
+                               iops: seconds > 0 ? Double(ops) / seconds : 0)
         } catch {
             addLog("Error in random read: \(error)")
-            return 0
+            return Measurement(mbps: 0, iops: 0)
         }
-        
-        let end = Date()
-        let timeInterval = end.timeIntervalSince(start)
-        let fileSize = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
-        return Double(fileSize) / timeInterval / (1024 * 1024) // MB/s
     }
+}
+
+/// One timed sample: throughput in MB/s, plus IOPS for the random tests.
+struct Measurement {
+    let mbps: Double
+    let iops: Double?
 }
 
 struct TestResult: Identifiable {
     let id = UUID()
     let name: String
     var speeds: [Double] = []
+    var iopsSamples: [Double] = []
     var sortedSpeeds: [(offset: Int, element: Double)] = []
-    
+
+    var isRandom: Bool { name.localizedCaseInsensitiveContains("Random") }
     var minSpeed: Double { speeds.min() ?? 0 }
     var avgSpeed: Double { speeds.isEmpty ? 0 : speeds.reduce(0, +) / Double(speeds.count) }
     var maxSpeed: Double { speeds.max() ?? 0 }
+    var avgIOPS: Double { iopsSamples.isEmpty ? 0 : iopsSamples.reduce(0, +) / Double(iopsSamples.count) }
 }
