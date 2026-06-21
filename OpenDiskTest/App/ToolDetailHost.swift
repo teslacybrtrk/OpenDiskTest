@@ -15,6 +15,8 @@ struct ToolDetailHost: View {
             switch kind {
             case .diskSpeed:
                 DiskSpeedDetailView(viewModel: model.diskVM)
+            case .systemMonitor:
+                SystemMonitorView()
             default:
                 ToolPlaceholderView(descriptor: kind.descriptor)
             }
