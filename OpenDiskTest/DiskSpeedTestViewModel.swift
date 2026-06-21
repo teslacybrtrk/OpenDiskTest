@@ -22,10 +22,17 @@ class DiskSpeedTestViewModel: ObservableObject {
     @Published var bypassCache: Bool = true {
         didSet { UserDefaults.standard.set(bypassCache, forKey: "bypassCache") }
     }
+    /// Number of concurrent in-flight I/O workers for the random tests. Higher values
+    /// expose the parallelism modern NVMe SSDs need to reach peak throughput.
+    @Published var queueDepth: Int = 1 {
+        didSet { UserDefaults.standard.set(queueDepth, forKey: "queueDepth") }
+    }
     @Published var isRunning = false
 
     /// Supported block sizes for the picker (KB).
     static let blockSizeOptions = [4, 64, 1024]
+    /// Supported queue depths (concurrent workers) for the random tests.
+    static let queueDepthOptions = [1, 2, 4, 8, 16, 32]
     private var blockSizeBytes: Int { max(1, blockSizeKB) * 1024 }
     @Published var currentIteration: Int = 0
 
@@ -70,6 +77,8 @@ class DiskSpeedTestViewModel: ObservableObject {
         if UserDefaults.standard.object(forKey: "bypassCache") != nil {
             bypassCache = UserDefaults.standard.bool(forKey: "bypassCache")
         }
+        let savedQD = UserDefaults.standard.integer(forKey: "queueDepth")
+        if Self.queueDepthOptions.contains(savedQD) { queueDepth = savedQD }
 
         loadTestDirectoryBookmark()
         refreshDriveInfo()
@@ -98,6 +107,7 @@ class DiskSpeedTestViewModel: ObservableObject {
         fileSize = preset.fileSizeMB
         iterations = preset.iterations
         blockSizeKB = preset.blockSizeKB
+        queueDepth = preset.queueDepth
         addLog("Applied preset: \(preset.name)")
     }
 
@@ -125,7 +135,12 @@ class DiskSpeedTestViewModel: ObservableObject {
     private func recordRun() {
         guard hasResults else { return }
         let entries = results.filter { !$0.speeds.isEmpty }.map {
-            BenchmarkRun.Entry(name: $0.name, avgMBps: $0.avgSpeed, avgIOPS: $0.isRandom ? $0.avgIOPS : nil)
+            BenchmarkRun.Entry(
+                name: $0.name,
+                avgMBps: $0.avgSpeed,
+                avgIOPS: $0.isRandom ? $0.avgIOPS : nil,
+                p99LatencyMs: $0.hasLatency ? $0.p99Latency : nil
+            )
         }
         let run = BenchmarkRun(
             id: UUID(),
@@ -137,6 +152,7 @@ class DiskSpeedTestViewModel: ObservableObject {
             fileSizeMB: fileSize,
             iterations: iterations,
             blockSizeKB: blockSizeKB,
+            queueDepth: queueDepth,
             bypassCache: bypassCache,
             entries: entries
         )
@@ -184,7 +200,7 @@ class DiskSpeedTestViewModel: ObservableObject {
         results = results.map { TestResult(name: $0.name) }
         logs.removeAll()
         
-        addLog("Starting tests — file size: \(String(format: "%.2f", fileSize)) MB, \(iterations) iterations, block \(blockSizeKB) KB, cache \(bypassCache ? "bypassed (F_NOCACHE)" : "enabled")")
+        addLog("Starting tests — file size: \(String(format: "%.2f", fileSize)) MB, \(iterations) iterations, block \(blockSizeKB) KB, QD\(queueDepth), cache \(bypassCache ? "bypassed (F_NOCACHE)" : "enabled")")
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
@@ -302,10 +318,12 @@ class DiskSpeedTestViewModel: ObservableObject {
         DispatchQueue.main.async {
             self.results[index].speeds.append(m.mbps)
             if let iops = m.iops { self.results[index].iopsSamples.append(iops) }
+            self.results[index].latencyMs.append(contentsOf: m.latencies)
             self.results[index].sortedSpeeds = self.results[index].speeds.enumerated().sorted { $0.element < $1.element }
 
             let iopsNote = m.iops.map { String(format: ", %.0f IOPS", $0) } ?? ""
-            self.addLog("\(name) - \(String(format: "%.2f", m.mbps)) MB/s\(iopsNote) (avg \(String(format: "%.2f", self.results[index].avgSpeed)) MB/s)")
+            let latNote = m.latencies.isEmpty ? "" : String(format: ", %.3f ms avg", m.latencies.reduce(0, +) / Double(m.latencies.count))
+            self.addLog("\(name) - \(String(format: "%.2f", m.mbps)) MB/s\(iopsNote)\(latNote) (avg \(String(format: "%.2f", self.results[index].avgSpeed)) MB/s)")
         }
     }
     
@@ -326,6 +344,7 @@ class DiskSpeedTestViewModel: ObservableObject {
         File size:  \(String(format: "%.2f", fileSize)) MB
         Iterations: \(iterations)
         Block size: \(blockSizeKB) KB
+        Queue depth:\(queueDepth)
         Cache:      \(bypassCache ? "bypassed (F_NOCACHE)" : "enabled")
         Location:   \(location)
 
@@ -338,13 +357,19 @@ class DiskSpeedTestViewModel: ObservableObject {
             line += d
             return line
         }
-        out += row("Test", "Min", "Avg", "Max", "(MB/s) | IOPS") + "\n"
+        out += row("Test", "Min", "Avg", "Max", "(MB/s) | IOPS / lat") + "\n"
         for r in results where !r.speeds.isEmpty {
             let minS = String(format: "%.2f", r.minSpeed)
             let avgS = String(format: "%.2f", r.avgSpeed)
             let maxS = String(format: "%.2f", r.maxSpeed)
-            let iopsS = r.isRandom ? String(format: "%.0f IOPS", r.avgIOPS) : ""
-            out += row(r.name, minS, avgS, maxS, iopsS) + "\n"
+            var extra = ""
+            if r.isRandom {
+                extra = String(format: "%.0f IOPS", r.avgIOPS)
+                if r.hasLatency {
+                    extra += String(format: " · %.3f ms avg / %.3f ms p99", r.avgLatency, r.p99Latency)
+                }
+            }
+            out += row(r.name, minS, avgS, maxS, extra) + "\n"
         }
         return out
     }
@@ -423,66 +448,79 @@ class DiskSpeedTestViewModel: ObservableObject {
     }
 
     private func randomWrite(size: Int, to url: URL) -> Measurement {
-        let block = blockSizeBytes
-        let blockCount = max(1, size / block)
-        let data = Data(count: block)
-        do {
-            let handle = try FileHandle(forWritingTo: url)
-            defer { try? handle.close() }
-            applyCachePolicy(handle)
-
-            var ops = 0
-            let start = Date()
-            for _ in 0..<blockCount {
-                guard isRunning else { break }
-                // Block-aligned random offset (required for good F_NOCACHE behavior).
-                let offset = UInt64(Int.random(in: 0..<blockCount) * block)
-                handle.seek(toFileOffset: offset)
-                handle.write(data)
-                ops += 1
-            }
-            fsync(handle.fileDescriptor)
-            let seconds = Date().timeIntervalSince(start)
-            return Measurement(mbps: megabytesPerSecond(bytes: ops * block, seconds: seconds),
-                               iops: seconds > 0 ? Double(ops) / seconds : 0)
-        } catch {
-            addLog("Error in random write: \(error)")
-            return Measurement(mbps: 0, iops: 0)
-        }
+        randomWorkload(url: url, write: true, fileSize: size)
     }
 
     private func randomRead(from url: URL) -> Measurement {
-        let block = blockSizeBytes
         let fileSize = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+        return randomWorkload(url: url, write: false, fileSize: fileSize)
+    }
+
+    /// Random read/write across `queueDepth` concurrent workers, each with its own
+    /// FileHandle so they seek independently. Captures per-operation latency (ms) and
+    /// aggregates throughput/IOPS over the wall-clock time.
+    private func randomWorkload(url: URL, write: Bool, fileSize: Int) -> Measurement {
+        let block = blockSizeBytes
         let blockCount = max(1, fileSize / block)
-        do {
-            let handle = try FileHandle(forReadingFrom: url)
+        let qd = max(1, queueDepth)
+        let opsPerWorker = max(1, blockCount / qd)
+
+        let lock = NSLock()
+        var allLatencies: [Double] = []
+        var totalOps = 0
+        var anyHandleOpened = false
+
+        let start = Date()
+        DispatchQueue.concurrentPerform(iterations: qd) { _ in
+            guard isRunning else { return }
+            let handle = write ? try? FileHandle(forWritingTo: url) : try? FileHandle(forReadingFrom: url)
+            guard let handle = handle else { return }
             defer { try? handle.close() }
             applyCachePolicy(handle)
+            let data = write ? Data(count: block) : Data()
 
-            var ops = 0
-            let start = Date()
-            for _ in 0..<blockCount {
+            var localLatencies: [Double] = []
+            localLatencies.reserveCapacity(opsPerWorker)
+            var localOps = 0
+            for _ in 0..<opsPerWorker {
                 guard isRunning else { break }
+                // Block-aligned random offset (required for good F_NOCACHE behavior).
                 let offset = UInt64(Int.random(in: 0..<blockCount) * block)
+                let t0 = DispatchTime.now()
                 handle.seek(toFileOffset: offset)
-                _ = handle.readData(ofLength: block)
-                ops += 1
+                if write { handle.write(data) } else { _ = handle.readData(ofLength: block) }
+                let t1 = DispatchTime.now()
+                localLatencies.append(Double(t1.uptimeNanoseconds - t0.uptimeNanoseconds) / 1_000_000.0)
+                localOps += 1
             }
-            let seconds = Date().timeIntervalSince(start)
-            return Measurement(mbps: megabytesPerSecond(bytes: ops * block, seconds: seconds),
-                               iops: seconds > 0 ? Double(ops) / seconds : 0)
-        } catch {
-            addLog("Error in random read: \(error)")
+            if write { fsync(handle.fileDescriptor) }
+
+            lock.lock()
+            anyHandleOpened = true
+            allLatencies.append(contentsOf: localLatencies)
+            totalOps += localOps
+            lock.unlock()
+        }
+        let seconds = Date().timeIntervalSince(start)
+
+        guard anyHandleOpened else {
+            addLog("Error in random \(write ? "write" : "read"): could not open file")
             return Measurement(mbps: 0, iops: 0)
         }
+        return Measurement(
+            mbps: megabytesPerSecond(bytes: totalOps * block, seconds: seconds),
+            iops: seconds > 0 ? Double(totalOps) / seconds : 0,
+            latencies: allLatencies
+        )
     }
 }
 
-/// One timed sample: throughput in MB/s, plus IOPS for the random tests.
+/// One timed sample: throughput in MB/s, plus IOPS and per-operation latencies (ms)
+/// for the random tests.
 struct Measurement {
     let mbps: Double
     let iops: Double?
+    var latencies: [Double] = []
 }
 
 /// Details about the volume/device the tests run on.
@@ -593,13 +631,15 @@ struct BenchmarkPreset: Identifiable {
     let fileSizeMB: Double
     let iterations: Int
     let blockSizeKB: Int
+    let queueDepth: Int
     var id: String { name }
 
     static let all: [BenchmarkPreset] = [
-        BenchmarkPreset(name: "Quick",    fileSizeMB: 64,  iterations: 3, blockSizeKB: 1024),
-        BenchmarkPreset(name: "Default",  fileSizeMB: 128, iterations: 5, blockSizeKB: 1024),
-        BenchmarkPreset(name: "Thorough", fileSizeMB: 512, iterations: 9, blockSizeKB: 1024),
-        BenchmarkPreset(name: "4K IOPS",  fileSizeMB: 128, iterations: 5, blockSizeKB: 4),
+        BenchmarkPreset(name: "Quick",    fileSizeMB: 64,  iterations: 3, blockSizeKB: 1024, queueDepth: 1),
+        BenchmarkPreset(name: "Default",  fileSizeMB: 128, iterations: 5, blockSizeKB: 1024, queueDepth: 1),
+        BenchmarkPreset(name: "Thorough", fileSizeMB: 512, iterations: 9, blockSizeKB: 1024, queueDepth: 4),
+        BenchmarkPreset(name: "4K IOPS",  fileSizeMB: 128, iterations: 5, blockSizeKB: 4,    queueDepth: 8),
+        BenchmarkPreset(name: "NVMe",     fileSizeMB: 256, iterations: 5, blockSizeKB: 1024, queueDepth: 16),
     ]
 }
 
@@ -614,6 +654,7 @@ struct BenchmarkRun: Codable, Identifiable {
     let fileSizeMB: Double
     let iterations: Int
     let blockSizeKB: Int
+    var queueDepth: Int = 1
     let bypassCache: Bool
     let entries: [Entry]
 
@@ -621,10 +662,30 @@ struct BenchmarkRun: Codable, Identifiable {
         let name: String
         let avgMBps: Double
         let avgIOPS: Double?
+        var p99LatencyMs: Double? = nil
     }
 
     var configSummary: String {
-        "\(String(format: "%.0f", fileSizeMB)) MB · \(iterations)× · \(blockSizeKB) KB · cache \(bypassCache ? "off" : "on")"
+        "\(String(format: "%.0f", fileSizeMB)) MB · \(iterations)× · \(blockSizeKB) KB · QD\(queueDepth) · cache \(bypassCache ? "off" : "on")"
+    }
+}
+
+extension BenchmarkRun {
+    // Custom decoder so history saved before queueDepth existed still loads.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        date = try c.decode(Date.self, forKey: .date)
+        build = try c.decode(String.self, forKey: .build)
+        volumeName = try c.decodeIfPresent(String.self, forKey: .volumeName)
+        mediaKind = try c.decodeIfPresent(String.self, forKey: .mediaKind)
+        locationPath = try c.decode(String.self, forKey: .locationPath)
+        fileSizeMB = try c.decode(Double.self, forKey: .fileSizeMB)
+        iterations = try c.decode(Int.self, forKey: .iterations)
+        blockSizeKB = try c.decode(Int.self, forKey: .blockSizeKB)
+        queueDepth = try c.decodeIfPresent(Int.self, forKey: .queueDepth) ?? 1
+        bypassCache = try c.decode(Bool.self, forKey: .bypassCache)
+        entries = try c.decode([Entry].self, forKey: .entries)
     }
 }
 
@@ -633,6 +694,7 @@ struct TestResult: Identifiable {
     let name: String
     var speeds: [Double] = []
     var iopsSamples: [Double] = []
+    var latencyMs: [Double] = []
     var sortedSpeeds: [(offset: Int, element: Double)] = []
 
     var isRandom: Bool { name.localizedCaseInsensitiveContains("Random") }
@@ -640,4 +702,15 @@ struct TestResult: Identifiable {
     var avgSpeed: Double { speeds.isEmpty ? 0 : speeds.reduce(0, +) / Double(speeds.count) }
     var maxSpeed: Double { speeds.max() ?? 0 }
     var avgIOPS: Double { iopsSamples.isEmpty ? 0 : iopsSamples.reduce(0, +) / Double(iopsSamples.count) }
+
+    var hasLatency: Bool { !latencyMs.isEmpty }
+    var avgLatency: Double { latencyMs.isEmpty ? 0 : latencyMs.reduce(0, +) / Double(latencyMs.count) }
+    /// p in 0...100. Returns the latency (ms) at that percentile.
+    func latencyPercentile(_ p: Double) -> Double {
+        guard !latencyMs.isEmpty else { return 0 }
+        let sorted = latencyMs.sorted()
+        let idx = min(sorted.count - 1, max(0, Int((p / 100.0) * Double(sorted.count))))
+        return sorted[idx]
+    }
+    var p99Latency: Double { latencyPercentile(99) }
 }
