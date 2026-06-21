@@ -28,14 +28,37 @@ class UpdateChecker: ObservableObject {
 
     private var assetURL: URL?
     private let repo = "teslacybrtrk/OpenDiskTest"
+    private var periodicTimer: Timer?
 
-    private func log(_ message: String) {
+    /// Starts periodic background update checks (in addition to the launch and manual
+    /// ⌘U checks). A long-running window will pick up new releases without a relaunch.
+    /// Skips a tick while an update is actively downloading so it never disrupts one.
+    func startPeriodicChecks(every interval: TimeInterval = 6 * 60 * 60) {
+        periodicTimer?.invalidate()
+        let timer = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                guard let self = self, !self.isDownloading, !self.updateAvailable else { return }
+                self.checkForUpdate()
+            }
+        }
+        // .common so the timer still fires during menu tracking / window resize.
+        RunLoop.main.add(timer, forMode: .common)
+        periodicTimer = timer
+    }
+
+    deinit {
+        periodicTimer?.invalidate()
+    }
+
+    // nonisolated: both only hop to the main queue, so they're safe to call from the
+    // background URLSession completion handlers without an actor warning.
+    nonisolated private func log(_ message: String) {
         DispatchQueue.main.async { [weak self] in
             self?.logHandler?("Update: \(message)")
         }
     }
 
-    private func setStatus(_ status: UpdateCheckStatus) {
+    nonisolated private func setStatus(_ status: UpdateCheckStatus) {
         DispatchQueue.main.async { [weak self] in self?.checkStatus = status }
     }
 

@@ -15,6 +15,7 @@ struct OpenDiskTestApp: App {
                         viewModel?.addLog(message)
                     }
                     updateChecker.checkForUpdate()
+                    updateChecker.startPeriodicChecks()
                 }
         }
         .windowResizability(.contentSize)
