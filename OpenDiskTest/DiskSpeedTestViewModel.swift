@@ -39,6 +39,13 @@ class DiskSpeedTestViewModel: ObservableObject {
     }
     static let sustainedDurationOptions = [15, 30, 60, 120]
 
+    // MARK: Integrity verify
+    @Published var verifying = false
+    @Published var verifyProgress: Double = 0
+    /// nil = no result; otherwise a pass/fail summary shown in a banner.
+    @Published var verifyResult: String? = nil
+    @Published var verifyPassed = false
+
     /// Supported block sizes for the picker (KB).
     static let blockSizeOptions = [4, 64, 1024]
     /// Supported queue depths (concurrent workers) for the random tests.
@@ -219,7 +226,16 @@ class DiskSpeedTestViewModel: ObservableObject {
             
             let testFileURL = self.getTestFileURL()
             let fileSizeBytes = Int(self.fileSize * 1024 * 1024)
-            
+
+            // Free-space safety guard: never try to write more than ~90% of free space.
+            if let free = self.availableBytes(at: testFileURL), Int64(fileSizeBytes) > free * 9 / 10 {
+                let needed = ByteCountFormatter.string(fromByteCount: Int64(fileSizeBytes), countStyle: .file)
+                let avail = ByteCountFormatter.string(fromByteCount: free, countStyle: .file)
+                self.addLog("Aborted: file size \(needed) exceeds safe free space (\(avail) available)")
+                DispatchQueue.main.async { self.isRunning = false }
+                return
+            }
+
             self.addLog("Test file location: \(testFileURL.path)")
             
             // Ensure the file exists before testing
@@ -495,6 +511,115 @@ class DiskSpeedTestViewModel: ObservableObject {
         let baseDir = testDirectory ?? URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
         return baseDir.appendingPathComponent("diskspeedtest.tmp")
     }
+
+    /// Currently-available capacity (bytes) for the volume holding `url`.
+    private func availableBytes(at url: URL) -> Int64? {
+        let values = try? url.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey])
+        if let important = values?.volumeAvailableCapacityForImportantUsage { return important }
+        let fallback = try? url.resourceValues(forKeys: [.volumeAvailableCapacityKey])
+        return fallback?.volumeAvailableCapacity.map { Int64($0) }
+    }
+
+    // MARK: - Integrity verify
+
+    func dismissVerifyResult() { verifyResult = nil }
+
+    /// Writes a known pattern across a `fileSize`-MB file, reads it back, and compares —
+    /// catching bad sectors / silent corruption. Honors the cache-bypass setting and the
+    /// free-space guard. Result is surfaced in a banner.
+    func verifyIntegrity() {
+        guard !isRunning, !sustainedRunning, !verifying else { return }
+        verifying = true
+        verifyProgress = 0
+        verifyResult = nil
+
+        let url = getTestFileURL().deletingLastPathComponent().appendingPathComponent("diskspeedtest-verify.tmp")
+        let block = blockSizeBytes
+        let size = Int(fileSize * 1024 * 1024)
+        let blockCount = max(1, size / block)
+        // Known pattern: 0,1,2,…255,0,1,… one block wide.
+        let pattern = Data((0..<block).map { UInt8($0 & 0xFF) })
+
+        addLog("Integrity verify started — \(String(format: "%.0f", fileSize)) MB, \(blockSizeKB) KB blocks")
+
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            let fm = FileManager.default
+
+            if let free = self.availableBytes(at: url), Int64(size) > free * 9 / 10 {
+                DispatchQueue.main.async {
+                    self.verifying = false
+                    self.verifyPassed = false
+                    self.verifyResult = "Not enough free space to verify \(String(format: "%.0f", self.fileSize)) MB"
+                }
+                return
+            }
+
+            fm.createFile(atPath: url.path, contents: nil)
+            guard let writer = try? FileHandle(forWritingTo: url) else {
+                DispatchQueue.main.async {
+                    self.verifying = false; self.verifyPassed = false
+                    self.verifyResult = "Could not create verify file"
+                }
+                return
+            }
+            if self.bypassCache { _ = fcntl(writer.fileDescriptor, F_NOCACHE, 1) }
+
+            // Write phase
+            for i in 0..<blockCount {
+                guard self.verifying else { break }
+                writer.write(pattern)
+                if i % 64 == 0 {
+                    let p = Double(i) / Double(blockCount) * 0.5
+                    DispatchQueue.main.async { self.verifyProgress = p }
+                }
+            }
+            fsync(writer.fileDescriptor)
+            try? writer.close()
+
+            // Read + compare phase
+            var mismatchAt: Int? = nil
+            var verifiedBlocks = 0
+            if let reader = try? FileHandle(forReadingFrom: url) {
+                if self.bypassCache { _ = fcntl(reader.fileDescriptor, F_NOCACHE, 1) }
+                for i in 0..<blockCount {
+                    guard self.verifying else { break }
+                    let chunk = reader.readData(ofLength: block)
+                    if chunk != pattern { mismatchAt = i; break }
+                    verifiedBlocks += 1
+                    if i % 64 == 0 {
+                        let p = 0.5 + Double(i) / Double(blockCount) * 0.5
+                        DispatchQueue.main.async { self.verifyProgress = p }
+                    }
+                }
+                try? reader.close()
+            } else {
+                mismatchAt = -1
+            }
+
+            try? fm.removeItem(at: url)
+
+            DispatchQueue.main.async {
+                let wasCancelled = !self.verifying
+                self.verifying = false
+                self.verifyProgress = 0
+                if wasCancelled { return }
+                let verifiedMB = Double(verifiedBlocks * block) / (1024 * 1024)
+                if let at = mismatchAt {
+                    self.verifyPassed = false
+                    let offset = ByteCountFormatter.string(fromByteCount: Int64(max(0, at) * block), countStyle: .file)
+                    self.verifyResult = "Integrity FAILED — mismatch at \(offset)"
+                    self.addLog("Integrity verify FAILED at block \(at)")
+                } else {
+                    self.verifyPassed = true
+                    self.verifyResult = String(format: "Integrity verified — %.0f MB, no errors", verifiedMB)
+                    self.addLog("Integrity verify passed (\(verifiedBlocks) blocks)")
+                }
+            }
+        }
+    }
+
+    func stopVerify() { verifying = false }
     
     // MARK: - Disk operations
 
