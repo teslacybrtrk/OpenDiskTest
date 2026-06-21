@@ -10,6 +10,10 @@ struct OpenDiskTestApp: App {
             ContentView(viewModel: viewModel, updateChecker: updateChecker)
                 .environmentObject(viewModel)
                 .onAppear {
+                    // Route update events into the Activity Log so failures are diagnosable.
+                    updateChecker.logHandler = { [weak viewModel] (message: String) in
+                        viewModel?.addLog(message)
+                    }
                     updateChecker.checkForUpdate()
                 }
         }
