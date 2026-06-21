@@ -435,6 +435,21 @@ struct ContentView: View {
                 .help("I/O block size for random tests. Smaller blocks stress IOPS; larger blocks favor throughput.")
             }
 
+            HStack(spacing: 8) {
+                Text("Queue Depth")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(Theme.secondaryText)
+                Picker("", selection: $viewModel.queueDepth) {
+                    ForEach(DiskSpeedTestViewModel.queueDepthOptions, id: \.self) { qd in
+                        Text("QD\(qd)").tag(qd)
+                    }
+                }
+                .pickerStyle(.menu)
+                .frame(width: 80)
+                .disabled(viewModel.isRunning)
+                .help("Concurrent in-flight I/O for the random tests. Higher queue depth unlocks the parallelism modern NVMe SSDs need for peak throughput.")
+            }
+
             Toggle(isOn: $viewModel.bypassCache) {
                 Text("Bypass cache")
                     .font(.system(size: 11, weight: .medium))
@@ -836,6 +851,11 @@ private struct HistoryRow: View {
                         Text(entry.avgIOPS.map { String(format: "%.0f IOPS", $0) } ?? "MB/s")
                             .font(.system(size: 8))
                             .foregroundColor(Theme.secondaryText)
+                        if let p99 = entry.p99LatencyMs {
+                            Text(String(format: "%.2f ms p99", p99))
+                                .font(.system(size: 8))
+                                .foregroundColor(Theme.secondaryText)
+                        }
                     }
                     .frame(maxWidth: .infinity)
                 }
@@ -927,24 +947,19 @@ struct TestCard: View {
             }
             .frame(height: 58)
 
-            // IOPS row (random tests only)
+            // IOPS + latency row (random tests only)
             if result.isRandom && !result.iopsSamples.isEmpty {
                 Divider().background(Theme.border)
-                HStack(spacing: 6) {
-                    Text("IOPS")
-                        .font(.system(size: 9, weight: .bold))
-                        .foregroundColor(Theme.secondaryText)
-                        .kerning(1.2)
-                    Spacer()
-                    Text(String(format: "%.0f", result.avgIOPS))
-                        .font(.system(size: 12, weight: .bold, design: .rounded))
-                        .foregroundColor(accent)
-                    Text("avg")
-                        .font(.system(size: 9))
-                        .foregroundColor(Theme.secondaryText)
+                HStack(spacing: 0) {
+                    metric(label: "IOPS", value: String(format: "%.0f", result.avgIOPS), unit: "avg")
+                    if result.hasLatency {
+                        Rectangle().fill(Theme.border).frame(width: 1, height: 22)
+                        metric(label: "LATENCY", value: String(format: "%.3f", result.avgLatency), unit: "ms avg")
+                        Rectangle().fill(Theme.border).frame(width: 1, height: 22)
+                        metric(label: "P99", value: String(format: "%.3f", result.p99Latency), unit: "ms")
+                    }
                 }
-                .padding(.horizontal, 14)
-                .frame(height: 30)
+                .frame(height: 36)
             }
         }
         .background(Theme.card)
@@ -953,6 +968,22 @@ struct TestCard: View {
             RoundedRectangle(cornerRadius: 10)
                 .stroke(Theme.border, lineWidth: 1)
         )
+    }
+
+    private func metric(label: String, value: String, unit: String) -> some View {
+        VStack(spacing: 1) {
+            Text(label)
+                .font(.system(size: 8, weight: .bold))
+                .foregroundColor(Theme.secondaryText)
+                .kerning(0.8)
+            Text(value)
+                .font(.system(size: 12, weight: .bold, design: .rounded))
+                .foregroundColor(accent)
+            Text(unit)
+                .font(.system(size: 8))
+                .foregroundColor(Theme.secondaryText)
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 
