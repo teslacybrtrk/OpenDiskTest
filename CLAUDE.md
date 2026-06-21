@@ -4,9 +4,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-OpenDiskTest is a macOS native desktop application (SwiftUI, macOS 14.5+) that benchmarks disk performance through sequential and random read/write operations, visualizing results with charts.
+**OpenDiskTest Suite** is a macOS native desktop application (SwiftUI, macOS 14.5+) — a dashboard of disk & system utilities. The UI display name is "OpenDiskTest Suite" (`CFBundleDisplayName`), but the **bundle id (`com.teslacybrtrk.OpenDiskTest`), GitHub repo, and self-updater are unchanged** — do not rename them; the updater is keyed to the repo.
 
-Beyond the core benchmark it offers: cache-bypass (`F_NOCACHE`) for true device speed, configurable I/O block size (4K/64K/1M), configurable queue depth (multithreaded random I/O, QD1–32), IOPS and latency (avg + p99) for random tests, a drive info panel (model, SSD/HDD, connection, filesystem, capacity), a sustained-write test with a live throughput-over-time graph, integrity verification (pattern write/read-back), a free-space safety guard, one-click presets, a persisted run history, PNG/clipboard export of results, background-completion notifications, a light/dark/system appearance toggle, and a one-click in-app self-updater.
+The app opens to a **dashboard launcher** (`DashboardView`) — a grid of tool cards with live mini-stats fed by a `SuiteModel` heartbeat. Clicking a card pushes the tool onto a `NavigationStack`; the back button returns home. Six tools:
+
+1. **Disk Speed Test** (the original app, migrated) — cache-bypass (`F_NOCACHE`), block size (4K/64K/1M), queue depth (QD1–32), IOPS + latency (avg/p99), drive info, sustained-write graph, integrity verify, free-space guard, presets, history, PNG/clipboard export, completion notifications.
+2. **Space Analyzer** — recursive scan + squarified treemap (`Treemap.layout`), drill-down navigation.
+3. **Duplicate Finder** — size → partial-hash → SHA256 pipeline; largest-files view; hardlink-aware reclaimable totals; move-to-Trash.
+4. **System Monitor** — live (1 Hz) CPU/memory/swap/battery/thermal via **public APIs only** (raw °C needs private APIs on Apple Silicon and is intentionally omitted; `ProcessInfo.thermalState` is used instead).
+5. **Network Speed** — Cloudflare download/upload/latency with a live graph.
+6. **Disk Cleanup** — caches/logs/DerivedData/archives/Trash; nothing pre-selected; always moves to Trash (except emptying the Trash, flagged permanent).
+
+Suite-wide: light/dark/system appearance toggle and a one-click in-app self-updater (both on the dashboard). The app is **not sandboxed** — file scans reach any user-readable location; some dirs need Full Disk Access for complete coverage.
+
+**Source layout** (folders mirror Xcode groups): `App/` (entry point + `SuiteModel` + shell + dashboard + `ToolDetailHost`), `Core/` (`Theme`, `Color+Hex`, `UpdateChecker`, `DesignSystem/`), `Tools/<ToolName>/` (one folder per tool, each with its view + view model), `Shared/FileScanEngine/` (the reusable walker, used by Space/Duplicate/Cleanup) and `Shared/Sensors/` (CPU/memory/battery readers). `BuildInfo.swift` stays at the `OpenDiskTest/` root (generated at build).
+
+**Adding source files:** the project is objectVersion 56 (explicit file refs, no folder-sync). New `.swift` files **must** be registered in `project.pbxproj` via `ruby scripts/add_files.rb <paths…>` (uses the `xcodeproj` gem) — never hand-edit the pbxproj.
 
 ## Build & Run
 

@@ -1,6 +1,6 @@
-# OpenDiskTest
+# OpenDiskTest Suite
 
-A simple, native macOS app for benchmarking disk speed. Measures sequential and random read/write performance and visualizes the results with live charts.
+A native macOS suite of disk & system utilities, presented on a dashboard of tools. Started as a disk benchmark and now also includes a storage analyzer, duplicate finder, live system monitor, network speed test, and disk cleanup.
 
 Requires macOS 14.5 or later.
 
@@ -26,17 +26,18 @@ We don't pay for an Apple Developer ID or notarization, so macOS Gatekeeper bloc
 
 You only need to do this once. After that, double-clicking the app opens it normally.
 
-## Features
+## Tools
 
-- **Sequential write/read** — measures sustained throughput with large files
-- **Random write/read** — measures IOPS-style performance with 4KB blocks (also reports effective throughput)
-- Choose custom test directory or volume (persisted via macOS security-scoped bookmarks) or stick with the system temp dir
-- Configurable file size (0.1–4096 MB) and iteration count (1–1000), with live validation
-- Settings (size, iterations, last test location) are persisted across launches
-- Live speed distribution charts per test
-- Min / Avg / Max statistics
-- Built-in activity log (separate window + "Log" button)
-- Update checker (banner + menu item) that links to GitHub releases (manual download recommended for safety)
+The app opens to a **dashboard** of tool cards (with live mini-stats); click one to open it, and use the back button to return home. Appearance (System/Light/Dark) and the in-app updater live on the dashboard.
+
+- **Disk Speed Test** — sequential & random read/write throughput, IOPS, latency (avg/p99), configurable block size and queue depth, cache bypass, sustained-write test, integrity verify, presets, history, and PNG/clipboard export.
+- **Space Analyzer** — recursively scans a folder (Home by default; whole-disk opt-in) and renders an interactive **squarified treemap**; click to drill in, reveal in Finder.
+- **Duplicate Finder** — finds identical files (size → partial-hash → SHA256) and your largest files; hardlink-aware reclaimable totals; move to Trash.
+- **System Monitor** — live per-core/aggregate CPU, memory breakdown + swap, battery health (cycles/condition/health %), and thermal state, with sparklines.
+- **Network Speed** — download/upload/latency measured against Cloudflare with a live throughput graph.
+- **Disk Cleanup** — reclaim space from caches, logs, Xcode DerivedData/archives, and the Trash; nothing pre-selected, everything moves to Trash (except emptying the Trash, which is clearly flagged).
+
+The app is **not sandboxed**, so file scans cover any user-readable location; some areas (Desktop/Documents/other volumes) may require granting **Full Disk Access** in System Settings for complete coverage.
 
 ## Building from source
 
